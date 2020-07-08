@@ -1,0 +1,29 @@
+device	/dev/ttyS0
+		#  serial port		
+baud	4800			#  rate to select		
+extra	5			#  chars to extend delays	
+key	lastflashed-key.s19
+		#  send string before download
+toggle	4			#  dtr or rts wire		
+hash	31			#  mark printing on	
+gap	2			#  wait ms before continuing
+addr	96			#  base addres to start read/write
+need	768			#  bytes to read/write at least
+wait	20			#  ms until break received or exit
+value	128			#  read from memory location
+MHz	1			#  of system clock in target
+cpu	3			#  variant in target	
+reset	0			#  device and write bootloader
+jump	32768			#  execute code in target	
+por	5000			#  power-on-reset with wait
+backup	3			#  file creation mask {1,2,4}
+zap	0			#  mass erase flash memory	
+flash	target.s19
+		#  s19 file to target eeprom
+tty	0			#  serial terminal IO with device
+load	eeprburn.bin
+		#  file(name) to RAM	
+read	target-backup.bin
+		#  monitor data to file(name)
+exec	0			#  fetch vector from SP and run
+stack	0			#  pointer read		
