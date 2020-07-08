@@ -1,0 +1,6 @@
+SRCS = \
+	main.cpp	\
+	linux_serial.cpp	\
+	hc908_variants.cpp \
+	S19KeyFile.cpp	\
+	S19rec_c.cpp	

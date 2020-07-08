@@ -1,0 +1,181 @@
+Content-type: text/html
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of Bin2S19</TITLE>
+</HEAD><BODY>
+<H1>Bin2S19</H1>
+Section: User Commands  (1)<BR>Updated: October 28, 2002<BR><A HREF="#index">Index</A>
+<A HREF="/cgi-bin/man/man2html">Return to Main Contents</A><HR>
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+
+
+Bin2S19 - makes hexdumps
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+Bin2S19 <B>-f</B> <I>&lt;file&gt;</I> <B>-w</B>   
+<P>
+
+Bin2S19 <B>-f</B> <I>&lt;file&gt;</I> [<B>-r</B>|<B>-s</B>] [<B>-x</B>] [<B>-c</B> <I>&lt;length&gt;</I>] [<B>-b</B> <I>&lt;address&gt;</I>]
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>Bin2S19</B>
+
+converts binary files to Motorola S19 format and vice versa. 
+It can process raw binaries as well as binaries created by dasm.  
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>OPTIONS</H2>
+
+<DL COMPACT>
+<DT><B>-b</B> <I>&lt;base_address&gt;</I>
+
+<DD>
+offset address where the binary file has to be placed in the Motorola ROM.
+<DT><B>-f</B> <I>&lt;file_string&gt;</I>
+
+<DD>
+input file name. When converting from S19 format to binary the extension &quot;s19&quot; 
+has to be ommitted. The output file will be named &quot;&lt;name&gt;-0x&lt;baseaddress&gt;.bin&quot;.
+<DT><B>-s, --s19</B>
+
+<DD>
+will create s19 format output from binary.
+<DT><B>-r, --ras</B>
+
+<DD>
+process binaries created by dasm with format &quot;random access segments&quot;.
+<DT><B>-w, --raw</B>
+
+<DD>
+make binary output from S19 file.
+<DT><B>-c</B> <I>&lt;record_number&gt;</I>
+
+<DD>
+specifies the S19 record lenght (number of bytes to process until 
+linefeed in S19 format will occur). 
+<DT><B>-x, --hexout</B>
+
+<DD>
+make raw hex dump. Ommits the S19 format record header and trailer 
+for each line.
+<DT><B>-n</B> <I>&lt;addr_number&gt;</I>
+
+<DD>
+number of address bytes {2,3,4} to create 16-, 24- or 32-bit addresses.
+<DT><B>-j</B> <I>&lt;jump_number&gt;</I>
+
+<DD>
+address to run program. This address will be placed in the S9 section (last section)
+<DT><B>-i, --ignore</B>
+
+<DD>
+If given on the command line the checksum from buggy s19 file will be ignored.
+<DT><B>-z</B> <I>&lt;size_number&gt;</I>
+
+<DD>
+Vector feature: If given on the command line record length will be reduced to 2 when
+the current adress is higher than (baseaddr + flashsize). This will lead to one S19-line
+per vector even if recordlength was specified higher.
+<P>
+<P>
+<P>
+</DL>
+<P>
+
+<DL COMPACT>
+<DT><B>--saverc</B>
+
+<DD>
+Save opts to personal rcfile <I>~/.Bin2S19rc</I> .
+<DT><B>-v, --verbose</B>
+
+<DD>
+Be more verbose.
+<DT><B>-h, --help</B>
+
+<DD>
+Print a help screen with defaults and exit.
+<DT><B>-V</B>
+
+<DD>
+Print version and copyright information, then exit. To get detailed version and copyright information about used modules do a
+<P>
+
+strings Bin2S19 | grep copyright: <B>[ENTER]</B>
+<P>
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>FILES</H2>
+
+<DL COMPACT>
+<DT><B>~/.Bin2S19rc</B>
+
+<DD>
+<DT><B>~/etc/Bin2S19.conf</B>
+
+<DD>
+<DT><B>~/share/Bin2S19/Bin2S19rc</B>
+
+<DD>
+<DT><B>/opt/etc/Bin2S19.conf</B>
+
+<DD>
+<DT><B>/opt/share/Bin2S19/Bin2S19rc</B>
+
+<DD>
+</DL>
+<P>
+
+<B>Bin2S19</B> looks at these locations to find its defaults. If a file is found further searching is aborted. All values can be overwritten by its corresponding commandline options.
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>ENVIRONMENT</H2>
+
+The <B>HOME</B> variable is used.
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<A HREF="/cgi-bin/man/man2html?1+dasm">dasm</A>(1)
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>BUGS</H2>
+
+no bugs discovered
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>AUTHOR</H2>
+
+Thomas Pantzer &lt;<A HREF="mailto:Thomas@Pantzer.net">Thomas@Pantzer.net</A>&gt;, 2002
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">OPTIONS</A><DD>
+<DT><A HREF="#lbAF">FILES</A><DD>
+<DT><A HREF="#lbAG">ENVIRONMENT</A><DD>
+<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+<DT><A HREF="#lbAI">BUGS</A><DD>
+<DT><A HREF="#lbAJ">AUTHOR</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 17:55:24 GMT, July 08, 2020
+</BODY>
+</HTML>

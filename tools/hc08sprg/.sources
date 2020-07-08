@@ -1,0 +1,6 @@
+SRCS = \
+	main.c	\
+	prog.c	\
+	s19.c	\
+	serial.c	\
+	seriallinux.c		

@@ -1,0 +1,129 @@
+.\"
+.\" Generated automatically from mk_man -- the manpage "templater" 
+.\"
+.\" Man page for Bin2S19
+.\"
+.\" Copyright (c) 2002, Thomas Pantzer,,,.
+.\"
+.\" Thomas Pantzer,,,
+.\" pantec@nadir
+.\" private site
+.\"
+.\" learning the man-style ?? 
+.\" type at the prompt>> 
+.\"		man 7 man [ENTER]
+.\"
+.\" hints
+.\"	.TH	-> title header	
+.\"	.SH	-> section header
+.\"	.B	-> bold 
+.\"	.TP	-> tagged list
+.\"	.BR	-> linefeed
+.\"	.PP	-> paragraph space
+.\"	\fB	-> bold
+.\"	\fI	-> italic (underline)
+.\"	\fR	-> normal attribute
+.\"
+.TH Bin2S19 1 "October 28, 2002"
+.LO 1
+.SH NAME
+.\" Abstract section
+.\"
+Bin2S19 \- makes hexdumps
+.SH SYNOPSIS
+Bin2S19 \fB-f\fR \fI<file>\fR \fB-w\fR   
+.PP
+Bin2S19 \fB-f\fR \fI<file>\fR [\fB-r\fR|\fB-s\fR] [\fB-x\fR] [\fB-c\fR \fI<length>\fR] [\fB\-\^b\fR \fI<address>\fR]
+.BR
+.\"
+.SH DESCRIPTION
+.B Bin2S19
+converts binary files to Motorola S19 format and vice versa. 
+It can process raw binaries as well as binaries created by dasm.  
+.\"
+.SH OPTIONS
+.TP
+.B \fB\-\^b\fR \fI<base_address>\fR
+offset address where the binary file has to be placed in the Motorola ROM.
+.TP
+.B \fB\-\^f\fR \fI<file_string>\fR
+input file name. When converting from S19 format to binary the extension "s19" 
+has to be ommitted. The output file will be named "<name>-0x<baseaddress>.bin".
+.TP
+.B \-\^s, \fB-\-\^s19\fR
+will create s19 format output from binary.
+.TP
+.B \-\^r, \fB-\-\^ras\fR
+process binaries created by dasm with format "random access segments".
+.TP
+.B \-\^w, \fB-\-\^raw\fR
+make binary output from S19 file.
+.TP
+.B \fB\-\^c\fR \fI<record_number>\fR
+specifies the S19 record lenght (number of bytes to process until 
+linefeed in S19 format will occur). 
+.TP
+.B \-\^x, \fB-\-\^hexout\fR
+make raw hex dump. Ommits the S19 format record header and trailer 
+for each line.
+.TP
+.B \fB\-\^n\fR \fI<addr_number>\fR
+number of address bytes {2,3,4} to create 16-, 24- or 32-bit addresses.
+.TP
+.B \fB\-\^j\fR \fI<jump_number>\fR
+address to run program. This address will be placed in the S9 section (last section)
+.TP
+.B \-\^i, \fB-\-\^ignore\fR
+If given on the command line the checksum from buggy s19 file will be ignored.
+.TP
+.B \fB\-\^z\fR \fI<size_number>\fR
+Vector feature: If given on the command line record length will be reduced to 2 when
+the current adress is higher than (baseaddr + flashsize). This will lead to one S19-line
+per vector even if recordlength was specified higher.
+
+
+
+.PP
+.TP
+.B \fB\-\-\^saverc\fR
+Save opts to personal rcfile \fI~/.Bin2S19rc\fR .
+.TP
+.B \-\^v, \fB\-\-\^verbose\fR
+Be more verbose.
+.TP
+.B \-\^h, \fB\-\-\^help\fR
+Print a help screen with defaults and exit.
+.TP
+.B \-\^V
+Print version and copyright information, then exit. To get detailed version and copyright information about used modules do a
+
+.BR
+strings Bin2S19 | grep copyright: \fB[ENTER]\fR
+
+.SH FILES
+.TP
+.B ~/.Bin2S19rc
+.TP
+.B ~/etc/Bin2S19.conf
+.TP
+.B ~/share/Bin2S19/Bin2S19rc
+.TP
+.B /opt/etc/Bin2S19.conf
+.TP
+.B /opt/share/Bin2S19/Bin2S19rc
+.PP
+\fBBin2S19\fR looks at these locations to find its defaults. If a file is found further searching is aborted. All values can be overwritten by its corresponding commandline options.
+.\"
+.SH ENVIRONMENT
+The \fBHOME\fR variable is used.
+.\"
+.SH "SEE ALSO"
+dasm(1)
+.\"
+.SH BUGS
+no bugs discovered
+.\"
+.SH AUTHOR
+Thomas Pantzer <Thomas@Pantzer.net>, 2002
+.\"
+.\"

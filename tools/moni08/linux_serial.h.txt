@@ -1,0 +1,62 @@
+/*-----------------------------------------------------------------------------
+Project name	:	khep_serial
+Filename	:	khep_serial.h
+Release		:	0.1 bis
+Purpose		:	Basic Package for communications with Khepera through
+                        the serial line
+Creation date	:	17/11/93
+Author		:	M. von Holzen, L. Tettoni
+Releaser        :       J.-Y. Tigli, O.Michel
+History         :       0.1	17/11/93	Creation
+                        0.1 bis 14/03/94        Modification
+                        0.1 ter 21/09/95        Modification
+-----------------------------------------------------------------------------*/
+
+#ifndef __KHEP_SERIAL_H__
+#define __KHEP_SERIAL_H__
+
+
+//#include "gen_types.h"
+
+
+#define KHEP_MSG_SIZE		200
+#define	KHEP_DEFAULT_BAUD	38400
+#define	KHEP_DEFAULT_TIMEOUT	5			/* deciseconds or -> 0.5 seconds */
+#define	KHEP_NB_RETRY		3
+
+
+
+
+/*---------------------------------------------------------------------------*/
+/* khepera package routines                                                  */
+/*---------------------------------------------------------------------------*/
+/* These routine make a specific use of the serial management functions to   */
+/* provide a more complete tool to communicate with a Khepera                */
+/*---------------------------------------------------------------------------*/
+
+#if  __GNUC__
+extern bool khep_send_recv(int fd,char *send,char *receive,int recv_len);
+extern bool khep_talk(int fd,char *send,char *receive,int recv_len);
+
+extern void serial_talk(int ,char [1024]);
+
+#endif
+
+#endif
+
+
+
+
+
+
+
+
+/**/
+/**/
+/**/
+/**/
+/**/
+/**/
+/**/
+/**/
+/*****  End Of File  ****************************/

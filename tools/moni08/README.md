@@ -1,0 +1,1 @@
+My own tool to flash via HC908 monitor-mode with applying high voltage to the IRQ pin.

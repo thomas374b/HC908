@@ -1,0 +1,5 @@
+HDRS = \
+	hc08sprg.h	\
+	serial.h	\
+	sysdep.h	\
+	sysdeplinux.h		
