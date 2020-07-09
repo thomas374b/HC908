@@ -11,7 +11,9 @@ ifeq (_$(CPU)_,__)
     CPU = mc68hc908$(VARIANT)
 endif
 
-REL_INC = ../../../..
+ifeq (_$(REL_INC)_,__)
+    REL_INC = ../../../..
+endif
 
 .CPU:
 	ln -s $(REL_INC)/include/.$(CPU).mk .CPU
@@ -30,7 +32,4 @@ macros.asm:
 
 fancy_macros.asm:
 	ln -s $(REL_INC)/include/fancy_macros.asm .
-
-board.asm:
-	ln -s $(REL_INC)/boards/$(BOARD)/board.asm .
 

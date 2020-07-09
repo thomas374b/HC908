@@ -28,5 +28,24 @@ clean:
 
 include ../.mklinks.mk
 
+board.asm:
+	ln -s $(REL_INC)/boards/$(BOARD)/board.asm .
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

@@ -68,6 +68,20 @@ _L1_{2}:
   			dbnzA	_L1_{2}		; [3] 3*(arg-1) + 2 T
   	.ENDM
 
+	.MACRO and_bits
+   		ldA.8  {1}                    ; .     $dc20   f6
+   		and    {2}                 ; .0    $dc21   aa 30
+   		stA.8  {1}                    ; .     $dc23   f7
+	.ENDM
+
+
+	.MACRO or_bits			        ;hfjdkghkd
+   		ldA.8  {1}                    ; .     $dc20   f6
+   		orA    {2}                 ; .0    $dc21   aa 30
+   		stA.8  {1}                    ; .     $dc23   f7
+	.ENDM
+
+
 
 
 
