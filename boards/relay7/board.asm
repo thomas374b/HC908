@@ -1,6 +1,8 @@
-
-
+;
+; 
 ; when running on usb08 power supply in half-speed monitor-mode
+;
+;
 
 	.INCLUDE	mc68hc908jk3.asm
 

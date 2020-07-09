@@ -1,5 +1,5 @@
 ;/*
-; * relais7-platform.asm
+; * relais7-platform.asm for hc08sprg bootloader
 ; *
 ; *  Created on: 15.06.2020
 ; *      Author: pantec
