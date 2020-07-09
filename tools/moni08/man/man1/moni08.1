@@ -1,0 +1,238 @@
+.\"
+.\" Generated automatically from mk_man -- the manpage "templater" 
+.\"
+.\" Man page for moni08
+.\"
+.\" Copyright (c) 2020, Thomas Pantzer,,,.
+.\"
+.\" Thomas Pantzer,,,
+.\" pantec@doha
+.\" private site
+.\"
+.\" learning the man-style ?? 
+.\" type at the prompt>> 
+.\"		man 7 man [ENTER]
+.\"
+.\" hints
+.\"	.TH	-> title header	
+.\"	.SH	-> section header
+.\"	.B	-> bold 
+.\"	.TP	-> tagged list
+.\"	.BR	-> linefeed
+.\"	.PP	-> paragraph space
+.\"	\fB	-> bold
+.\"	\fI	-> italic (underline)
+.\"	\fR	-> normal attribute
+.\"
+.TH moni08 1 "Juli 10, 2020"
+.LO 1
+.SH NAME
+.\" Abstract section
+.\"
+moni08 \- "swiss army knife" for managing Motorola mc68hc908 CPUs in Monitor Mode
+.SH SYNOPSIS
+moni08 
+.\"
+.SH DESCRIPTION
+.B moni08
+is mainly used to flash bootloader code into the internal flash rom of the following 
+Motorola CPUs. mc68hc908jk1, mc68hc908jk3, mc68hc908jb8, mc68hc908mr32.
+.BR
+.B moni08
+understands the Motorola Monitor Mode protocol. It can read or write memory locations 
+in the target CPU, read the contents of the stack-pointer or execute code on the target
+CPU. A special hardware adapter has to be wired from the PCs serial port to the controller. 
+Read Motorolas Application Note AN2317 how to get your controller into monitor mode.
+.PP
+.B moni08
+can read Motorola S19 format files in order to be flashed to the targets flash ROM.
+CPU-specific supplementary code has to be available in the current directory.
+.PP
+.B moni08
+can also operate the DTR or RTS line in order to reset the target CPU before flashing.
+It is also able to unlock Motorolas FLASH-security feature if given the correct key. The 
+key can also be extracted from a formerly binary or s19-file. If flashing was successful
+the new key can be saved automatically to a separate file.
+.PP
+Finally
+.B moni08
+can work with non-standard baudrates if the target operates on a crystal different from 
+the reference design. The baudrate can be any integer divided from 115200.  The external
+program \fIsetserial\fR is used for that purpose. (works only on Linux) 
+.\"
+
+
+
+.\"
+.SH OPTIONS
+.TP
+.B \fB\-\^d\fR \fI<device_string>\fR
+serial port	to be opened
+.TP
+.B \fB\-\^b\fR \fI<baud_number>\fR
+baudrate to select. If a nonstandard baudrate is selected an integer divider will be calculated
+D = 115200 / baud.  With this divider the external program setserial will be called to set
+the custom divider. The resulting baudrate may not match the target because of rounding errors
+especially with the higher baudrates there are only a few integer dividers available.
+
+.TP
+.B \fB\-\^e\fR \fI<extra_number>\fR
+Number of char-times to extend delays in handshaking timeouts. Higher numbers make the communication slower.
+.TP
+.B \fB\-\^k\fR \fI<key_string>\fR
+send 8 bytes after reset to unlock Motorolas FLASH-security feature. The argument can be a 
+string, a hexadecimal number or a file name. If a S19 file-name is given, the 8 bytes from 
+the corresponding vector address are taken. Thus one may give the filename of the previously 
+flashed file to have always the correct key.
+.PP
+The bytes are sent in case of reset when waiting for the break signal.
+.TP
+.B \fB\-\^t\fR \fI<toggle_number>\fR
+Toggles the DTR or RTS line. The number is a bitmask that describes what to do.
+.BR
+        1 = DTR should be high
+.BR
+        2 = RTS should be high
+.BR
+        4 = modify only DTR
+.BR
+        8 = modify only RTS
+.PP                                                                                             
+ Example1: 12 => DTR and RTS gow low.                                             
+.BR                                                                                             
+ Example2:  5 => DTR goes high, RTS is unchanged/untouched.                                
+.TP
+.B \fB\-\^#\fR \fI<number>\fR
+prints a hash mark after \fI<number>\fR bytes sent or received. \fI<number>\fR should be n^2-1 i.e. {3,7,15,31,63,127,255,...}
+.TP
+.B \fB\-\^g\fR \fI<milli seconds>\fR
+wait before continuing with the next command.
+.TP
+.B \fB\-\^a\fR \fI<address>\fR
+Base address to start read or write operations.
+.TP
+.B \fB\-\^n\fR \fI<length>\fR
+bytes to read before continuing with the next command.
+.TP
+.B \fB\-\^w\fR \fI<milli seconds>\fR
+Timeout to wait for the break signal from target. The target CPU should send a break signal after coming out of reset. 
+If it is missing the security bytes are sent by 
+.B moni08
+or if the key argument was missing the remaining commands are aborted.
+.TP
+.B \fB\-\^m\fR \fI<address>\fR
+read content from memory location and write to stdout.
+.TP
+.B \fB\-\^M\fR \fI<MHz_number>\fR
+The MHz are needed to calibrate the delay loop for flash erase/program operations.
+.TP
+.B \fB\-\^c\fR \fI<cpu index>\fR
+CPU variant in target.
+.BR
+        0 = hc908jk1
+.BR
+        1 = hc908jk3
+.BR
+        2 = hc908jb8
+.BR
+        3 = hc908mr32
+.BR    
+.TP
+.B \-\^R, \fB-\-\^reset\fR
+Reset device and write bootloader to target. Same as
+.PP
+-d \fI<serial_port>\fR -t 4 -g 2 -t 5 -a \fI<ramstart>\fR -l \fI<hc906Variant>\fR-bootloader.bin
+.BR
+.TP
+.B \fB\-\^j\fR \fI<jump address>\fR
+Execute code in target at address.
+.TP
+.B \fB\-\^P\fR \fI<milli seconds>\fR
+Power-On-Reset with wait. Pulls the DTR wire low, waits \fI<milli seconds>\fR to give the user time to switch target power supply on, continues
+including key sending. Same as
+.PP
+-k \fI<keyfile>\fR -d \fI<serial_port>\fR -t 4 -g 2 -t 5 -w 200 -a \fI<ramstart>\fR -l \fI<hc906Variant>\fR-bootloader.bin
+.BR
+.TP
+.B \fB\-\^B\fR \fI<backup action mask>\fR
+Create a backup file after successfull flash programming.
+.BR
+ 0 = don't do any backup activity
+.BR
+ 1 = save backup file of currently flashed content to \fBlastflashed-backup.s19\fR and rotate an existing backup with \fIcp -f -p -b\fR
+.BR
+ 2 = create file \fBlastflashed-key.s19\fR containing only key-bytes
+.BR
+ 4 = create binary file \fBlastflashed-key.bin\fR with 8 key-bytes   
+.PP
+Any combinations 1-7 possible.
+.TP
+.B \-\^Z, \fB-\-\^zap\fR
+Mass-erase flash memory with the help of binary file \fIhc908Variant\fR-bulkErase.bin 
+(must be available in current directory).
+.TP
+.B \fB\-\^f\fR \fI<S19 file name>\fR
+Flash-program the S19 file to target eeprom.
+.TP
+.B \-\^T, \fB-\-\^tty\fR
+Go into terminal-IO mode with the target until Ctrl-C is presssed
+.TP
+.B \fB\-\^l\fR \fI<binary file name>\fR
+Load file into RAM. See argument \fB\-\^a\fR for base address to start writing to.
+.TP
+.B \fB\-\^r\fR \fI<binary file name>\fR
+Read monitor data an save then to file. See argument \fB\-\^a\fR for base address to start reading from.
+.TP
+.B \-\^e, \fB-\-\^exec\fR
+Fetch vector from SP and run program. This makes only sense if one has patched the memory 
+locations where the SP was pointing to before with the jump-address of the code to be executed.
+.TP
+.B \-\^s, \fB-\-\^stack\fR
+Read the contents of the stack pointer register and print to stdout.
+
+.PP
+.TP
+.B \-\^s, \fB\-\-\^saverc\fR
+Save opts to personal rcfile \fI~/.moni08rc\fR .
+.TP
+.B \-\^v, \fB\-\-\^verbose\fR
+Be more verbose.
+.TP
+.B \-\^h, \fB\-\-\^help\fR
+Print a help screen with defaults and exit.
+.TP
+.B \-\^V
+Print version and copyright information, then exit. To get detailed version and copyright information 
+about used modules do a
+
+.BR
+strings moni08 | grep copyright: \fB[ENTER]\fR
+
+.SH FILES
+.TP
+.B ~/.moni08rc
+.TP
+.B ~/etc/moni08.conf
+.TP
+.B ~/share/moni08/moni08rc
+.TP
+.B /opt/Pantec/etc/moni08.conf
+.TP
+.B /opt/Pantec/share/moni08/moni08rc
+.PP
+\fBmoni08\fR looks at these locations to find its defaults. If a file is found further searching is 
+aborted. All values can be overwritten by its corresponding commandline options.
+.\"
+.SH ENVIRONMENT
+The \fBHOME\fR variable is used.
+.\"
+.SH "SEE ALSO"
+cp(1), setserial(8), Motorola Application Note AN2317
+.\"
+.SH BUGS
+no bugs discovered
+.\"
+.SH AUTHOR
+Thomas Pantzer,,,, pantec@doha, 2020
+.\"
+.\"

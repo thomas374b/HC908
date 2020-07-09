@@ -1,0 +1,325 @@
+Content-type: text/html
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of moni08</TITLE>
+</HEAD><BODY>
+<H1>moni08</H1>
+Section: User Commands  (1)<BR>Updated: Juli 10, 2020<BR><A HREF="#index">Index</A>
+<A HREF="/cgi-bin/man/man2html">Return to Main Contents</A><HR>
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+
+
+moni08 - &quot;swiss army knife&quot; for managing Motorola mc68hc908 CPUs in Monitor Mode
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+moni08 
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>moni08</B>
+
+is mainly used to flash bootloader code into the internal flash rom of the following 
+Motorola CPUs. mc68hc908jk1, mc68hc908jk3, mc68hc908jb8, mc68hc908mr32.
+
+<B>moni08</B>
+
+understands the Motorola Monitor Mode protocol. It can read or write memory locations 
+in the target CPU, read the contents of the stack-pointer or execute code on the target
+CPU. A special hardware adapter has to be wired from the PCs serial port to the controller. 
+Read Motorolas Application Note AN2317 how to get your controller into monitor mode.
+<P>
+
+<B>moni08</B>
+
+can read Motorola S19 format files in order to be flashed to the targets flash ROM.
+CPU-specific supplementary code has to be available in the current directory.
+<P>
+
+<B>moni08</B>
+
+can also operate the DTR or RTS line in order to reset the target CPU before flashing.
+It is also able to unlock Motorolas FLASH-security feature if given the correct key. The 
+key can also be extracted from a formerly binary or s19-file. If flashing was successful
+the new key can be saved automatically to a separate file.
+<P>
+
+Finally
+<B>moni08</B>
+
+can work with non-standard baudrates if the target operates on a crystal different from 
+the reference design. The baudrate can be any integer divided from 115200.  The external
+program <I>setserial</I> is used for that purpose. (works only on Linux) 
+
+<P>
+<P>
+<P>
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>OPTIONS</H2>
+
+<DL COMPACT>
+<DT><B>-d</B> <I>&lt;device_string&gt;</I>
+
+<DD>
+serial port<TT>&nbsp;&nbsp;&nbsp;&nbsp;</TT>to be opened<BR>
+<DT><B>-b</B> <I>&lt;baud_number&gt;</I>
+
+<DD>
+baudrate to select. If a nonstandard baudrate is selected an integer divider will be calculated
+D = 115200 / baud.  With this divider the external program setserial will be called to set
+the custom divider. The resulting baudrate may not match the target because of rounding errors
+especially with the higher baudrates there are only a few integer dividers available.
+<P>
+<DT><B>-e</B> <I>&lt;extra_number&gt;</I>
+
+<DD>
+Number of char-times to extend delays in handshaking timeouts. Higher numbers make the communication slower.
+<DT><B>-k</B> <I>&lt;key_string&gt;</I>
+
+<DD>
+send 8 bytes after reset to unlock Motorolas FLASH-security feature. The argument can be a 
+string, a hexadecimal number or a file name. If a S19 file-name is given, the 8 bytes from 
+the corresponding vector address are taken. Thus one may give the filename of the previously 
+flashed file to have always the correct key.
+</DL>
+<P>
+
+The bytes are sent in case of reset when waiting for the break signal.
+<DL COMPACT>
+<DT><B>-t</B> <I>&lt;toggle_number&gt;</I>
+
+<DD>
+Toggles the DTR or RTS line. The number is a bitmask that describes what to do.
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1&nbsp;=&nbsp;DTR&nbsp;should&nbsp;be&nbsp;high
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2&nbsp;=&nbsp;RTS&nbsp;should&nbsp;be&nbsp;high
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4&nbsp;=&nbsp;modify&nbsp;only&nbsp;DTR
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;8&nbsp;=&nbsp;modify&nbsp;only&nbsp;RTS
+</DL>
+<P>
+
+<BR>&nbsp;Example1:&nbsp;12&nbsp;=&gt;&nbsp;DTR&nbsp;and&nbsp;RTS&nbsp;gow&nbsp;low.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<BR>&nbsp;Example2:&nbsp;&nbsp;5&nbsp;=&gt;&nbsp;DTR&nbsp;goes&nbsp;high,&nbsp;RTS&nbsp;is&nbsp;unchanged/untouched.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<DL COMPACT>
+<DT><B>-#</B> <I>&lt;number&gt;</I>
+
+<DD>
+prints a hash mark after <I>&lt;number&gt;</I> bytes sent or received. <I>&lt;number&gt;</I> should be n^2-1 i.e. {3,7,15,31,63,127,255,...}
+<DT><B>-g</B> <I>&lt;milli seconds&gt;</I>
+
+<DD>
+wait before continuing with the next command.
+<DT><B>-a</B> <I>&lt;address&gt;</I>
+
+<DD>
+Base address to start read or write operations.
+<DT><B>-n</B> <I>&lt;length&gt;</I>
+
+<DD>
+bytes to read before continuing with the next command.
+<DT><B>-w</B> <I>&lt;milli seconds&gt;</I>
+
+<DD>
+Timeout to wait for the break signal from target. The target CPU should send a break signal after coming out of reset. 
+If it is missing the security bytes are sent by 
+<B>moni08</B>
+
+or if the key argument was missing the remaining commands are aborted.
+<DT><B>-m</B> <I>&lt;address&gt;</I>
+
+<DD>
+read content from memory location and write to stdout.
+<DT><B>-M</B> <I>&lt;MHz_number&gt;</I>
+
+<DD>
+The MHz are needed to calibrate the delay loop for flash erase/program operations.
+<DT><B>-c</B> <I>&lt;cpu index&gt;</I>
+
+<DD>
+CPU variant in target.
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;=&nbsp;hc908jk1
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1&nbsp;=&nbsp;hc908jk3
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2&nbsp;=&nbsp;hc908jb8
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3&nbsp;=&nbsp;hc908mr32
+
+<DT><B>-R, --reset</B>
+
+<DD>
+Reset device and write bootloader to target. Same as
+</DL>
+<P>
+
+-d <I>&lt;serial_port&gt;</I> -t 4 -g 2 -t 5 -a <I>&lt;ramstart&gt;</I> -l <I>&lt;hc906Variant&gt;</I>-bootloader.bin
+
+<DL COMPACT>
+<DT><B>-j</B> <I>&lt;jump address&gt;</I>
+
+<DD>
+Execute code in target at address.
+<DT><B>-P</B> <I>&lt;milli seconds&gt;</I>
+
+<DD>
+Power-On-Reset with wait. Pulls the DTR wire low, waits <I>&lt;milli seconds&gt;</I> to give the user time to switch target power supply on, continues
+including key sending. Same as
+</DL>
+<P>
+
+-k <I>&lt;keyfile&gt;</I> -d <I>&lt;serial_port&gt;</I> -t 4 -g 2 -t 5 -w 200 -a <I>&lt;ramstart&gt;</I> -l <I>&lt;hc906Variant&gt;</I>-bootloader.bin
+
+<DL COMPACT>
+<DT><B>-B</B> <I>&lt;backup action mask&gt;</I>
+
+<DD>
+Create a backup file after successfull flash programming.
+
+<BR>&nbsp;0&nbsp;=&nbsp;don't&nbsp;do&nbsp;any&nbsp;backup&nbsp;activity
+
+<BR>&nbsp;1&nbsp;=&nbsp;save&nbsp;backup&nbsp;file&nbsp;of&nbsp;currently&nbsp;flashed&nbsp;content&nbsp;to&nbsp;<B>lastflashed-backup.s19</B>&nbsp;and&nbsp;rotate&nbsp;an&nbsp;existing&nbsp;backup&nbsp;with&nbsp;<I>cp&nbsp;-f&nbsp;-p&nbsp;-b</I>
+
+<BR>&nbsp;2&nbsp;=&nbsp;create&nbsp;file&nbsp;<B>lastflashed-key.s19</B>&nbsp;containing&nbsp;only&nbsp;key-bytes
+
+<BR>&nbsp;4&nbsp;=&nbsp;create&nbsp;binary&nbsp;file&nbsp;<B>lastflashed-key.bin</B>&nbsp;with&nbsp;8&nbsp;key-bytes&nbsp;&nbsp;&nbsp;
+</DL>
+<P>
+
+Any combinations 1-7 possible.
+<DL COMPACT>
+<DT><B>-Z, --zap</B>
+
+<DD>
+Mass-erase flash memory with the help of binary file <I>hc908Variant</I>-bulkErase.bin 
+(must be available in current directory).
+<DT><B>-f</B> <I>&lt;S19 file name&gt;</I>
+
+<DD>
+Flash-program the S19 file to target eeprom.
+<DT><B>-T, --tty</B>
+
+<DD>
+Go into terminal-IO mode with the target until Ctrl-C is presssed
+<DT><B>-l</B> <I>&lt;binary file name&gt;</I>
+
+<DD>
+Load file into RAM. See argument <B>-a</B> for base address to start writing to.
+<DT><B>-r</B> <I>&lt;binary file name&gt;</I>
+
+<DD>
+Read monitor data an save then to file. See argument <B>-a</B> for base address to start reading from.
+<DT><B>-e, --exec</B>
+
+<DD>
+Fetch vector from SP and run program. This makes only sense if one has patched the memory 
+locations where the SP was pointing to before with the jump-address of the code to be executed.
+<DT><B>-s, --stack</B>
+
+<DD>
+Read the contents of the stack pointer register and print to stdout.
+<P>
+</DL>
+<P>
+
+<DL COMPACT>
+<DT><B>-s, --saverc</B>
+
+<DD>
+Save opts to personal rcfile <I>~/.moni08rc</I> .
+<DT><B>-v, --verbose</B>
+
+<DD>
+Be more verbose.
+<DT><B>-h, --help</B>
+
+<DD>
+Print a help screen with defaults and exit.
+<DT><B>-V</B>
+
+<DD>
+Print version and copyright information, then exit. To get detailed version and copyright information 
+about used modules do a
+<P>
+
+strings moni08 | grep copyright: <B>[ENTER]</B>
+<P>
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>FILES</H2>
+
+<DL COMPACT>
+<DT><B>~/.moni08rc</B>
+
+<DD>
+<DT><B>~/etc/moni08.conf</B>
+
+<DD>
+<DT><B>~/share/moni08/moni08rc</B>
+
+<DD>
+<DT><B>/opt/Pantec/etc/moni08.conf</B>
+
+<DD>
+<DT><B>/opt/Pantec/share/moni08/moni08rc</B>
+
+<DD>
+</DL>
+<P>
+
+<B>moni08</B> looks at these locations to find its defaults. If a file is found further searching is 
+aborted. All values can be overwritten by its corresponding commandline options.
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>ENVIRONMENT</H2>
+
+The <B>HOME</B> variable is used.
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<A HREF="/cgi-bin/man/man2html?1+cp">cp</A>(1), <A HREF="/cgi-bin/man/man2html?8+setserial">setserial</A>(8), Motorola Application Note AN2317
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>BUGS</H2>
+
+no bugs discovered
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>AUTHOR</H2>
+
+Thomas Pantzer,,,, <A HREF="mailto:pantec@doha">pantec@doha</A>, 2020
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">OPTIONS</A><DD>
+<DT><A HREF="#lbAF">FILES</A><DD>
+<DT><A HREF="#lbAG">ENVIRONMENT</A><DD>
+<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+<DT><A HREF="#lbAI">BUGS</A><DD>
+<DT><A HREF="#lbAJ">AUTHOR</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 23:32:10 GMT, July 09, 2020
+</BODY>
+</HTML>
