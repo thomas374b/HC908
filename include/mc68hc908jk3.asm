@@ -19,7 +19,7 @@ FLASH_START		.EQU            $EC00
 FLASH_SIZE		.EQU            4096
 		.ENDIF
 
-	.INCLUDE	reg68hc908jk1.asm
+	.INCLUDE	reg68hc908jk3.asm
 ;
 ;  Register Section Bits FLCR
 ;

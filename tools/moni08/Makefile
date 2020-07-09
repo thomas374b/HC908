@@ -609,11 +609,12 @@ help:
 	echo " press [ENTER] to continue:"		;\
 	read A )
 
+
 ifeq ($(WITH_QTOPIA),y)
 # include qtopia2.mk
 $(OPA)/%.dep: $(UMAUIC)/.depend
 else
-$(OPA)/%.dep: 
+$(OPA)/%.dep: $(SRCS) $(HDRS)
 endif
 ifneq (_$(UNAME)$(MACHINE)_,__)
 	@echo "refreshing dependency $@" 	

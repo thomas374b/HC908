@@ -9,7 +9,7 @@ ifeq (_$(TTY)_,__)
 endif
 
 
-MONI_EXE = ../../tools/moni08/built/Linux-i686/moni08
+MONI_EXE = ../../../moni08/built/Linux-i686/moni08
 MONI_08 = $(MONI_EXE) -v -b $(BAUD) -d $(TTY)
 
 POWER_ON_GAP = 5000

@@ -1,1 +1,7 @@
-HDRS = 	
+HDRS = \
+	fileNameFromDesc.h	\
+	hc908_monitor_commands.h	\
+	hc908_variants.h	\
+	linux_serial.h	\
+	S19KeyFile.h	\
+	S19rec_c.h		

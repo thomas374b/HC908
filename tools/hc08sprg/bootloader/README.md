@@ -9,7 +9,7 @@ the target.
 The bootloader tries to re-use code from monitor-ROM as much as possible 
 and consumes only few bytes.
 
-Details can be found in the Freescale Application Note XXXX (Todo:)
+Details can be found in the Freescale Application Note AN2295 (see docs subdirectory)
 
 Each subdirectory is dedicated to a specific CPU type and platform.
 You may have to edit the file .CPU (included into Makefile)
