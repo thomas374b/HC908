@@ -18,17 +18,20 @@
 
 
 #ifndef TIMER_N
+	#ifndef	_isrNo_TIMOVF
+		#error "missing symbol _isrNo_TIMOVF, fix header file for CPU type"
+	#else
+		#define		TIMER_IRQ		_isrNo_TIMOVF	// number of overflow interrupt
+	#endif
+
 	#ifdef _MC68HC908MR32_H
 		#define		TIMER_N			B
-		#define		TIMER_IRQ		16	// number of overflow interrupt
-			// be aware of the compiler bug, counting reset as an interrupt !!!
 
 //		#define		TIMER_N			A
-//		#define		TIMER_IRQ		13
+//		#define		TIMER_IRQ		_isrNo_TimAOvf
 	#else
 		#ifdef 	_MC68HC908JKJL_H
 			#define		TIMER_N			1
-			#define		TIMER_IRQ		_isrNo_TIMOVF
 		#else
 			#error "no timer specified"
 		#endif
@@ -46,6 +49,7 @@
 #define	DEF_TSC(n)				DEF_CONCAT3(T,n,SC)
 #define	DEF_TSC1(n)				DEF_CONCAT3(T,n,SC1)
 #define	DEF_TMOD(n)				DEF_CONCAT3(T,n,MOD)
+
 #ifdef WITH_TDELAY
 	#define	DEF_TCHN(n, c)		DEF_CONCAT4(T,n,CH,c)
 	#define	DEF_TCHNH(n, c)		DEF_CONCAT5(T,n,CH,c,H)
@@ -129,9 +133,10 @@
 //	#define 	TIMER_PRESCALER_VALUE		128UL
 //#else
 	// TODO: check if timer is also driven by half frequency
+
+	// timer prescaler is choosen to be as big as possible to minimize interrupt load
 	#define 	TIMER_PRESCALER_VALUE		64UL
 //#endif
-
 
 
 
@@ -172,15 +177,6 @@ typedef struct {
 #endif
 
 
-// #define		TIMER_WRAP_SAFETY_GAP		5  // old approach
-
-#ifdef WITH_COP_ENABLED
-	#define			COP_Reset()				asm("mov #0xFF,_COPCTL")
-#else
-	#define	COP_Reset()
-#endif
-
-
 #ifdef WITH_GETTIME_FUNC
 timer_uint_t
 #else
@@ -191,9 +187,10 @@ getTime(void)
 {
 	timer_counter_t tfrac;
 
-	while(1) {		// introduces ??? ms jitter @ wrap
-		// TODO: review, this is a problematic area, try critical region with sei/cli
+	// this is a problematic area, a critical region
+	// but we don't want make use of sei/cli since this would skew the timer clock
 
+	while(1) {
 		// double read approach
 		tfrac = TCNT_REG;
 
@@ -208,9 +205,9 @@ getTime(void)
 #ifdef WITH_COP_ENABLED
 			COP_Reset();
 #endif
-			continue;
+			// introduces ??? ms jitter @ wrap
+			continue;	// in rare cases we do this activity twice
 		}
-
 		break;
 	}
 	// we have a snapshot of "global_timer_wraps" in "now"

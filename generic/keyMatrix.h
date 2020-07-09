@@ -9,8 +9,6 @@
  *     - bit on rows are outputs
  *     - to check a key on a row this row must be pulled down while the other should float high
  *
- *
- *
  */
 
 
@@ -173,18 +171,35 @@ inline void keymatrix_init()
 }
 
 
-// callback handler, should be called very often in regular intervals
+/*
+ * keypress callback handler, the function should be called at regular intervals
+ * approx. every 5ms
+ *
+ * If a key was pressed at least for KEY_DEBOUNCE_CNT times when the function was called
+ * it returns once the symbol of the pressed key together with the key-press mask.
+ * If a key is hold it returns 0 again until the same key gets released or another key
+ * is pressed.
+ *
+ * If two keys are pressed simultaneously and they are on different pages
+ * a key release event for the first key will be issued followed by a key press event
+ * for the second button.  If the two simultaneous pressed keys are on the same page
+ * the combined symbol for both keys will be issued together with press or release
+ * event.
+ *
+ * Finally if a key was released at least KEY_DEBOUNCE_CNT/2 times ago, the symbol
+ * of that key will be returned again together with the key-release mask.
+ *
+ * @return symbol of pressed or released key or 0 (zero) in case no key was pressed
+ */
 inline uint8_t keyEvent()
 {
-	if (keyData.msk & keyPage) {
+	if (keyData.msk & keyPage) { // toggle the rows
 		BIT_ROW0 = 0;
 		BIT_ROW1 = 1;
 	} else {
 		BIT_ROW0 = 1;
 		BIT_ROW1 = 0;
 	}
-
-//	uDelay150();
 
 	keyData.msk = ((BIT_COL_PORT & keyColumnMask) | (BIT_ROW_PORT & (keyPage|BIT_ROW1_MASK)));
 	uint8_t j = (keyData.msk & keyPage) ? (NUM_KEYS/2) : 0;

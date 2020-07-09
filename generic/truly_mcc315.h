@@ -4,7 +4,7 @@
  *  Created on: 21.06.2020
  *      Author: pantec
  *
- *   TRULY MCC3165-A  TR-805 94V-0
+ *   TRULY MCC315-A  TR-805 94V-0
  *
  *   this is sort of a hd44780 "compatible" clone with SPI transport
  *   and a built-in 2x3 key-matrix
@@ -16,7 +16,8 @@
  *
  *   the data is LSB first
  *
- *   it has some special symbols in the top row which are accessed by .... (TODO:)
+ *   it has some special symbols in the top row which are accessed by
+ *   writing to CGRAM in extended function mode
  *
  */
 

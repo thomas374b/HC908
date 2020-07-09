@@ -168,8 +168,9 @@ uint8_t uart_getc()
 }
 #endif
 
+#ifdef WITH_COP_ENABLED
 // inline
-void COP_reset()
+void COP_Reset()
 {
 	__asm
 		brset	#0,*_CONFIG1,_no_cop_reset
@@ -180,6 +181,10 @@ void COP_reset()
 _no_cop_reset:
 	__endasm;
 }
+#else
+	#define	COP_Reset()
+#endif
+
 
 
 void BusyLoopCopy()
@@ -266,9 +271,12 @@ WriteSciLoop            .EQU    0xFCEF           ; Start address in HX, length i
 WriteSciLen                     .EQU    0x0063
 */
 
-
 #include "timer_hc908.h"
-// #include "adc_hc908.h"
+
+#ifdef WITH_ADC_CHANNELS
+	#include "adc_hc908.h"
+#endif
+
 #include "i2c_hc908.h"
 #include "m41t56.h"
 

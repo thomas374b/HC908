@@ -3,6 +3,11 @@
  *
  *  Created on: 21.06.2020
  *      Author: pantec
+ *
+ *   SPI utility functions
+ *
+ *   - implements a short round robin buffer for receiving chars from the SPI hardware
+ *   - event based receiving via interrupt
  */
 
 #ifndef SPI_HC908_H_
@@ -45,6 +50,7 @@ typedef struct {
 	uint8_t rBuf[SPI_RECBUF_LEN];
 } spi_receiver_data_t;
 
+// instantiate this in your main program as global
 extern volatile spi_receiver_data_t spi_receiver;
 
 
@@ -54,7 +60,6 @@ void spi_receive_ISR(void) __interrupt(_isrNo_SPIreceive)
 	uint8_t tmp = SPSCR;
 	spi_receiver.dataReg = SPDR;
 	SPRF = 0;
-
 
 	if ((tmp & spiRecErrorMask) > 0) {
 		spi_receiver.statusReg |= (tmp & spiRecErrorMask);
@@ -76,7 +81,9 @@ void spi_receive_ISR(void) __interrupt(_isrNo_SPIreceive)
 	}
 }
 
-
+/**
+ * pops one char from the SPI round robin buffer
+ */
 inline
 uint8_t nextSpiByte()
 {
@@ -124,7 +131,7 @@ void spi_write(uint8_t data)
 #ifdef WITH_STACK_TEST
 	testStack();
 #endif
-	while (SPTE == 0) {};
+	while (SPTE == 0) {};	// wait for transmitter empty
 	SPDR = data;
 }
 

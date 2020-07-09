@@ -354,8 +354,6 @@ void trigger1000action()
 		uart_printd(timer_data.wrap_count);
 
 #ifdef WITH_I2C_CLOCK
-
-
 		i = m41t56_read_wa(0, FIXED_I2C_DATA_LEN);
 
 		if (i == 0) {
@@ -508,9 +506,11 @@ void trigger1000action()
 */
 }
 
-inline void uartAction()
+inline
+void uartAction()
 {
 	uint8_t i;
+
 	uint8_t rb = nextUartByte();
 
 //		if (rb == '\\') {
@@ -687,58 +687,6 @@ inline void uartAction()
 
 }
 
-#if 0
-inline
-void loop()
-{
-//	uint8_t strng[32];
-//	uint8_t i;
-
-//	uint8_t br;
-//	uint8_t m;
-
-//	getTime();
-
-	if (uart_bytesAvailable) {
-	}
-
-
-#if 0
-	if (at_interval(50, &timer0)) {
-
-//
-#ifdef VARIANT_0
-		uart_printd(timer_data.now);
-#else
-		uint8_t buf[32];
-		long2strJK(timer_data.now, 7, 1, buf);
-		for (i=0; i<32; i++) {
-			if (buf[i] == 0) {
-				break;
-			}
-			uart_putc(buf[i]);
-		}
-#endif
-		uart_printb(PORTA);		// control
-		uart_printb(PORTB);		// inputs I5..I12
-		uart_printb(PORTC);		// input bits
-		uart_printb(PORTD);		// maybe keyboard
-		uart_printb(PORTE);		// inputs I2..I4, 2 missing relays ?
-//		uart_printb(PORTF);
-
-		uart_printb(PWMOUT);
-
-		uart_putc('\n');
-	}
-#endif
-
-
-
-
-
-}
-#endif
-
 
 
 inline void loop()
@@ -746,7 +694,9 @@ inline void loop()
 #ifdef WITH_KEYBOARD
 #endif
 	uint8_t rb;
+#ifdef WITH_ADC_CHANNELS
 	uint8_t i;
+#endif
 //	uint8_t r;
 
 	if (spi_bytesAvailable) {

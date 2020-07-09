@@ -1,0 +1,679 @@
+--- sdcc-20200621/device/include/hc08/mc68hc908jb8.h-vanilla	2012-03-13 11:17:10.000000000 +0100
++++ sdcc/device/include/hc08/mc68hc908jb8.h	2020-07-09 21:27:42.442158020 +0200
+@@ -411,4 +411,16 @@ _VOLXDATA _UINT8 __at 0xfe0e BRKSCR;  /*
+ 
+ _VOLXDATA _UINT8 __at 0xffff COPCTL;  /* COP Control Register */
+ 
++
++#define         _isrNo_KEYB             7
++#define         _isrNo_TIMOVF           6
++#define         _isrNo_TIM1             5
++#define         _isrNo_TIM0             4
++#define         _isrNo_IRQ              3
++#define         _isrNo_USB              2
++#define         _isrNo_SWI              1
++
++#define         _isrNo_RESET            0               /* not an interrupt but SDCC wants it so */
++
++
+ #endif
+--- sdcc-20200621/device/include/hc08/mc68hc908jkjl.h-vanilla	2012-03-13 11:17:10.000000000 +0100
++++ sdcc/device/include/hc08/mc68hc908jkjl.h	2020-07-09 14:20:36.000000000 +0200
+@@ -405,4 +405,18 @@ _VOLXDATA _UINT8 __at 0xfe0e BRKSCR;  /*
+ 	
+ _VOLXDATA _UINT8 __at 0xffff COPCTL;  /* COP Control Register */
+ 
++
++#define         _isrNo_ADC              16
++#define         _isrNo_KEYB             15
++/* not used                             7..14 */
++#define         _isrNo_TIMOVF           6
++#define         _isrNo_TIM1             5
++#define         _isrNo_TIM0             4
++/* not used                             3 */
++#define         _isrNo_IRQ              2
++#define         _isrNo_SWI              1
++
++#define         _isrNo_RESET            0		/* not an interrupt but SDCC wants it so */
++
++
+ #endif
+--- sdcc-20200621/device/include/hc08/mc68hc908mr32.h-vanilla	2020-07-09 21:20:51.946158069 +0200
++++ sdcc/device/include/hc08/mc68hc908mr32.h	2020-06-25 12:12:37.000000000 +0200
+@@ -0,0 +1,636 @@
++/*-------------------------------------------------------------------------
++   mc68hc908mr32.h - Register Declarations for Motorola MC68HC908MR32
++
++   Copyright (C) 2004, Juan Gonzalez <juan@iearobotics.com>
++
++   Based on mc68hc908gp32.h,
++     Written By - Thomas Pantzer github@pantzer.net (2020)
++
++   This library is free software; you can redistribute it and/or modify it
++   under the terms of the GNU General Public License as published by the
++   Free Software Foundation; either version 2, or (at your option) any
++   later version.
++
++   This library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
++   GNU General Public License for more details.
++
++   You should have received a copy of the GNU General Public License 
++   along with this library; see the file COPYING. If not, write to the
++   Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston,
++   MA 02110-1301, USA.
++
++   As a special exception, if you link this library with other files,
++   some of which are compiled with SDCC, to produce an executable,
++   this library does not by itself cause the resulting executable to
++   be covered by the GNU General Public License. This exception does
++   not however invalidate any other reasons why the executable file
++   might be covered by the GNU General Public License.
++-------------------------------------------------------------------------*/
++
++#ifndef _MC68HC908MR32_H
++#define _MC68HC908MR32_H
++
++#ifndef _UINT8
++ #define _UINT8 unsigned char
++#endif
++#ifndef _UINT16
++ #define _UINT16 unsigned int
++#endif
++#ifndef _VOLDATA
++ #define _VOLDATA volatile __data
++#endif
++#ifndef _VOLXDATA
++ #define _VOLXDATA volatile __xdata
++#endif
++
++struct __hc08_bits
++{
++  unsigned int bit0:1;
++  unsigned int bit1:1;
++  unsigned int bit2:1;
++  unsigned int bit3:1;
++  unsigned int bit4:1;
++  unsigned int bit5:1;
++  unsigned int bit6:1;
++  unsigned int bit7:1;
++};
++
++
++_VOLDATA _UINT8 __at 0x00 PTA;     /* Port A Data Register */
++#define PORTA PTA		 /* Alias for PTA        */
++  #define PTA0 ((struct __hc08_bits *)(&PTA))->bit0
++  #define PTA1 ((struct __hc08_bits *)(&PTA))->bit1
++  #define PTA2 ((struct __hc08_bits *)(&PTA))->bit2
++  #define PTA3 ((struct __hc08_bits *)(&PTA))->bit3
++  #define PTA4 ((struct __hc08_bits *)(&PTA))->bit4
++  #define PTA5 ((struct __hc08_bits *)(&PTA))->bit5
++  #define PTA6 ((struct __hc08_bits *)(&PTA))->bit6
++  #define PTA7 ((struct __hc08_bits *)(&PTA))->bit7
++
++_VOLDATA _UINT8 __at 0x01 PTB;     /* Port B Data Register */
++#define PORTB PTB              /* Alias for PTB        */
++  #define PTB0 ((struct __hc08_bits *)(&PTB))->bit0
++  #define PTB1 ((struct __hc08_bits *)(&PTB))->bit1
++  #define PTB2 ((struct __hc08_bits *)(&PTB))->bit2
++  #define PTB3 ((struct __hc08_bits *)(&PTB))->bit3
++  #define PTB4 ((struct __hc08_bits *)(&PTB))->bit4
++  #define PTB5 ((struct __hc08_bits *)(&PTB))->bit5
++  #define PTB6 ((struct __hc08_bits *)(&PTB))->bit6
++  #define PTB7 ((struct __hc08_bits *)(&PTB))->bit7
++
++_VOLDATA _UINT8 __at 0x02 PTC;     /* Port C Data Register */
++#define PORTC PTC              /* Alias for PTC        */
++  #define PTC0 ((struct __hc08_bits *)(&PTC))->bit0
++  #define PTC1 ((struct __hc08_bits *)(&PTC))->bit1
++  #define PTC2 ((struct __hc08_bits *)(&PTC))->bit2
++  #define PTC3 ((struct __hc08_bits *)(&PTC))->bit3
++  #define PTC4 ((struct __hc08_bits *)(&PTC))->bit4
++  #define PTC5 ((struct __hc08_bits *)(&PTC))->bit5
++  #define PTC6 ((struct __hc08_bits *)(&PTC))->bit6
++  #define PTC7 ((struct __hc08_bits *)(&PTC))->bit7
++
++_VOLDATA _UINT8 __at 0x03 PTD;     /* Port D Data Register */
++#define PORTD PTD              /* Alias for PTD        */
++  #define PTD0 ((struct __hc08_bits *)(&PTD))->bit0
++  #define PTD1 ((struct __hc08_bits *)(&PTD))->bit1
++  #define PTD2 ((struct __hc08_bits *)(&PTD))->bit2
++  #define PTD3 ((struct __hc08_bits *)(&PTD))->bit3
++  #define PTD4 ((struct __hc08_bits *)(&PTD))->bit4
++  #define PTD5 ((struct __hc08_bits *)(&PTD))->bit5
++  #define PTD6 ((struct __hc08_bits *)(&PTD))->bit6
++  #define PTD7 ((struct __hc08_bits *)(&PTD))->bit7
++
++
++
++_VOLDATA _UINT8 __at 0x04 DDRA;    /* Data Direction Register A */
++  #define DDRA0 ((struct __hc08_bits *)(&DDRA))->bit0
++  #define DDRA1 ((struct __hc08_bits *)(&DDRA))->bit1
++  #define DDRA2 ((struct __hc08_bits *)(&DDRA))->bit2
++  #define DDRA3 ((struct __hc08_bits *)(&DDRA))->bit3
++  #define DDRA4 ((struct __hc08_bits *)(&DDRA))->bit4
++  #define DDRA5 ((struct __hc08_bits *)(&DDRA))->bit5
++  #define DDRA6 ((struct __hc08_bits *)(&DDRA))->bit6
++  #define DDRA7 ((struct __hc08_bits *)(&DDRA))->bit7
++
++_VOLDATA _UINT8 __at 0x05 DDRB;    /* Data Direction Register B */
++  #define DDRB0 ((struct __hc08_bits *)(&DDRB))->bit0
++  #define DDRB1 ((struct __hc08_bits *)(&DDRB))->bit1
++  #define DDRB2 ((struct __hc08_bits *)(&DDRB))->bit2
++  #define DDRB3 ((struct __hc08_bits *)(&DDRB))->bit3
++  #define DDRB4 ((struct __hc08_bits *)(&DDRB))->bit4
++  #define DDRB5 ((struct __hc08_bits *)(&DDRB))->bit5
++  #define DDRB6 ((struct __hc08_bits *)(&DDRB))->bit6
++  #define DDRB7 ((struct __hc08_bits *)(&DDRB))->bit7
++
++_VOLDATA _UINT8 __at 0x06 DDRC;    /* Data Direction Register C */
++  #define DDRC0 ((struct __hc08_bits *)(&DDRC))->bit0
++  #define DDRC1 ((struct __hc08_bits *)(&DDRC))->bit1
++  #define DDRC2 ((struct __hc08_bits *)(&DDRC))->bit2
++  #define DDRC3 ((struct __hc08_bits *)(&DDRC))->bit3
++  #define DDRC4 ((struct __hc08_bits *)(&DDRC))->bit4
++  #define DDRC5 ((struct __hc08_bits *)(&DDRC))->bit5
++  #define DDRC6 ((struct __hc08_bits *)(&DDRC))->bit6
++  #define DDRC7 ((struct __hc08_bits *)(&DDRC))->bit7
++
++_VOLDATA _UINT8 __at 0x07 DDRD;    /* Data Direction Register D */
++  #define DDRD0 ((struct __hc08_bits *)(&DDRD))->bit0
++  #define DDRD1 ((struct __hc08_bits *)(&DDRD))->bit1
++  #define DDRD2 ((struct __hc08_bits *)(&DDRD))->bit2
++  #define DDRD3 ((struct __hc08_bits *)(&DDRD))->bit3
++  #define DDRD4 ((struct __hc08_bits *)(&DDRD))->bit4
++  #define DDRD5 ((struct __hc08_bits *)(&DDRD))->bit5
++  #define DDRD6 ((struct __hc08_bits *)(&DDRD))->bit6
++  #define DDRD7 ((struct __hc08_bits *)(&DDRD))->bit7
++
++_VOLDATA _UINT8 __at 0x08 PTE;     /* Port E Data Register */
++#define PORTE PTE              /* Alias for PTE        */
++  #define PTE0 ((struct __hc08_bits *)(&PTE))->bit0
++  #define PTE1 ((struct __hc08_bits *)(&PTE))->bit1
++  #define PTE2 ((struct __hc08_bits *)(&PTE))->bit2
++  #define PTE3 ((struct __hc08_bits *)(&PTE))->bit3
++  #define PTE4 ((struct __hc08_bits *)(&PTE))->bit4
++  #define PTE5 ((struct __hc08_bits *)(&PTE))->bit5
++  #define PTE6 ((struct __hc08_bits *)(&PTE))->bit6
++  #define PTE7 ((struct __hc08_bits *)(&PTE))->bit7
++
++_VOLDATA _UINT8 __at 0x0C DDRE;    /* Data Direction Register E */
++  #define DDRE0 ((struct __hc08_bits *)(&DDRE))->bit0
++  #define DDRE1 ((struct __hc08_bits *)(&DDRE))->bit1
++  #define DDRE2 ((struct __hc08_bits *)(&DDRE))->bit2
++  #define DDRE3 ((struct __hc08_bits *)(&DDRE))->bit3
++  #define DDRE4 ((struct __hc08_bits *)(&DDRE))->bit4
++  #define DDRE5 ((struct __hc08_bits *)(&DDRE))->bit5
++  #define DDRE6 ((struct __hc08_bits *)(&DDRE))->bit6
++  #define DDRE7 ((struct __hc08_bits *)(&DDRE))->bit7
++
++
++_VOLDATA _UINT8 __at 0x09 PTF;     /* Port F Data Register */
++#define PORTF PTF              /* Alias for PTF        */
++  #define PTF0 ((struct __hc08_bits *)(&PTF))->bit0
++  #define PTF1 ((struct __hc08_bits *)(&PTF))->bit1
++  #define PTF2 ((struct __hc08_bits *)(&PTF))->bit2
++  #define PTF3 ((struct __hc08_bits *)(&PTF))->bit3
++  #define PTF4 ((struct __hc08_bits *)(&PTF))->bit4
++  #define PTF5 ((struct __hc08_bits *)(&PTF))->bit5
++  #define PTF6 ((struct __hc08_bits *)(&PTF))->bit6
++  #define PTF7 ((struct __hc08_bits *)(&PTF))->bit7
++
++_VOLDATA _UINT8 __at 0x0D DDRF;    /* Data Direction Register E */
++  #define DDRF0 ((struct __hc08_bits *)(&DDRF))->bit0
++  #define DDRF1 ((struct __hc08_bits *)(&DDRF))->bit1
++  #define DDRF2 ((struct __hc08_bits *)(&DDRF))->bit2
++  #define DDRF3 ((struct __hc08_bits *)(&DDRF))->bit3
++  #define DDRF4 ((struct __hc08_bits *)(&DDRF))->bit4
++  #define DDRF5 ((struct __hc08_bits *)(&DDRF))->bit5
++  #define DDRF6 ((struct __hc08_bits *)(&DDRF))->bit6
++  #define DDRF7 ((struct __hc08_bits *)(&DDRF))->bit7
++
++
++/*------------------*/
++/* TIM A REGISTERS  */
++/*------------------*/
++
++_VOLDATA _UINT8 __at 0x0E TASC;     /* TIM A Status and Control */
++  #define TAPS0   ((struct __hc08_bits *)(&TASC))->bit0
++  #define TAPS1   ((struct __hc08_bits *)(&TASC))->bit1
++  #define TAPS2   ((struct __hc08_bits *)(&TASC))->bit2
++  #define TATRST  ((struct __hc08_bits *)(&TASC))->bit4
++  #define TATSTOP ((struct __hc08_bits *)(&TASC))->bit5
++  #define TATOIE  ((struct __hc08_bits *)(&TASC))->bit6
++  #define TATOF   ((struct __hc08_bits *)(&TASC))->bit7
++
++_VOLDATA _UINT16 __at 0x0F TACNT;    /* TIMA Counter High & Low Registers */
++_VOLDATA _UINT8  __at 0x0F  TACNTH;  /* TIMA Counter Register High */
++_VOLDATA _UINT8  __at 0x10  TACNTL;  /* TIMA Counter Register Low */
++
++_VOLDATA _UINT16 __at 0x11 TAMOD;    /* TIMA Counter Modulo High & Low Registers */
++_VOLDATA _UINT8  __at 0x11 TAMODH;   /* TIMA Counter Modulo Register High */
++_VOLDATA _UINT8  __at 0x12 TAMODL;   /* TIMA Counter Modulo Register Low */
++
++_VOLDATA _UINT8 __at 0x13 TASC0;    /* TIMA Channel 0 Status and Control Register */
++  #define TACH0MAX ((struct __hc08_bits *)(&TASC0))->bit0
++  #define TATOV0   ((struct __hc08_bits *)(&TASC0))->bit1
++  #define TAELS0A  ((struct __hc08_bits *)(&TASC0))->bit2
++  #define TAELS0B  ((struct __hc08_bits *)(&TASC0))->bit3
++  #define TAMS0A   ((struct __hc08_bits *)(&TASC0))->bit4
++  #define TAMS0B   ((struct __hc08_bits *)(&TASC0))->bit5
++  #define TACH0IE  ((struct __hc08_bits *)(&TASC0))->bit6
++  #define TACH0F   ((struct __hc08_bits *)(&TASC0))->bit7
++
++_VOLDATA _UINT16 __at 0x14 TACH0;   /* TIMA Channel 0 High & Low Registers */
++_VOLDATA _UINT8  __at 0x14 TACH0H;   /* TIMA Channel 0 Register High */
++_VOLDATA _UINT8  __at 0x15 TACH0L;   /* TIMA Channel 0 Register Low */
++
++_VOLDATA _UINT8 __at 0x16 TASC1;    /* TIMA Channel 1 Status and Control Register */
++  #define TACH1MAX ((struct __hc08_bits *)(&TASC1))->bit0
++  #define TATOV1   ((struct __hc08_bits *)(&TASC1))->bit1
++  #define TAELS1A  ((struct __hc08_bits *)(&TASC1))->bit2
++  #define TAELS1B  ((struct __hc08_bits *)(&TASC1))->bit3
++  #define TAMS1A   ((struct __hc08_bits *)(&TASC1))->bit4
++  #define TACH1IE  ((struct __hc08_bits *)(&TASC1))->bit6
++  #define TACH1F   ((struct __hc08_bits *)(&TASC1))->bit7
++
++_VOLDATA _UINT16 __at 0x17  TACH1;    /* TIMA Channel 1 High & Low Registers */
++_VOLDATA _UINT8  __at 0x17  TACH1H;  /* TIMA Channel 1 Register High */
++_VOLDATA _UINT8  __at 0x18  TACH1L;  /* TIMA Channel 1 Register Low */
++
++_VOLDATA _UINT8 __at 0x19 TASC2;    /* TIMA Channel 2 Status and Control Register */
++  #define TACH2MAX ((struct __hc08_bits *)(&TASC2))->bit0
++  #define TATOV2   ((struct __hc08_bits *)(&TASC2))->bit1
++  #define TAELS2A  ((struct __hc08_bits *)(&TASC2))->bit2
++  #define TAELS2B  ((struct __hc08_bits *)(&TASC2))->bit3
++  #define TAMS2A   ((struct __hc08_bits *)(&TASC2))->bit4
++  #define TACH2IE  ((struct __hc08_bits *)(&TASC2))->bit6
++  #define TACH2F   ((struct __hc08_bits *)(&TASC2))->bit7
++
++_VOLDATA _UINT16 __at 0x1A  TACH2;    /* TIMA Channel 2 High & Low Registers */
++_VOLDATA _UINT8  __at 0x1A  TACH2H;  /* TIMA Channel 2 Register High */
++_VOLDATA _UINT8  __at 0x1B  TACH2L;  /* TIMA Channel 2 Register Low */
++
++_VOLDATA _UINT8 __at 0x1C TASC3;    /* TIMA Channel 3 Status and Control Register */
++  #define TACH3MAX ((struct __hc08_bits *)(&TASC3))->bit0
++  #define TATOV3   ((struct __hc08_bits *)(&TASC3))->bit1
++  #define TAEL32A  ((struct __hc08_bits *)(&TASC3))->bit2
++  #define TAEL32B  ((struct __hc08_bits *)(&TASC3))->bit3
++  #define TAMS3A   ((struct __hc08_bits *)(&TASC3))->bit4
++  #define TACH3IE  ((struct __hc08_bits *)(&TASC3))->bit6
++  #define TACH3F   ((struct __hc08_bits *)(&TASC3))->bit7
++
++_VOLDATA _UINT16 __at 0x1D  TACH3;    /* TIMA Channel 3 High & Low Registers */
++_VOLDATA _UINT8  __at 0x1D  TACH3H;  /* TIMA Channel 3 Register High */
++_VOLDATA _UINT8  __at 0x1E  TACH3L;  /* TIMA Channel 3 Register Low */
++
++/************************************************************/
++
++_VOLDATA _UINT8 __at 0x1F CONFIG1; /* Configuration Register 1 */
++/* CONFIG1 is one-time writeable, so can't use bitfields */
++#define			CONFIG		CONFIG1
++
++/*  PWM control */
++_VOLXDATA _UINT8 __at 0x20 PCTL1;  /* PWM Control Register 1 */
++	#define DISX   ((struct __hc08_bits *)(&PCTL1))->bit7
++	#define DISY   ((struct __hc08_bits *)(&PCTL1))->bit6
++	#define PWMINT ((struct __hc08_bits *)(&PCTL1))->bit5
++	#define PWMF   ((struct __hc08_bits *)(&PCTL1))->bit4
++	#define ISENS1 ((struct __hc08_bits *)(&PCTL1))->bit3
++	#define ISENS0 ((struct __hc08_bits *)(&PCTL1))->bit2
++	#define LDOK   ((struct __hc08_bits *)(&PCTL1))->bit1
++	#define PWMEN  ((struct __hc08_bits *)(&PCTL1))->bit0
++
++_VOLXDATA _UINT8 __at 0x20 PCTL2;  /* PWM Control Register 1 */
++	#define LDFQ1  ((struct __hc08_bits *)(&PCTL2))->bit7
++	#define LDFQ0  ((struct __hc08_bits *)(&PCTL2))->bit6
++	/* RESERVED */
++	#define IPOL1  ((struct __hc08_bits *)(&PCTL2))->bit4
++	#define IPOL2  ((struct __hc08_bits *)(&PCTL2))->bit3
++	#define IPOL3  ((struct __hc08_bits *)(&PCTL2))->bit2
++	#define PRSC1  ((struct __hc08_bits *)(&PCTL2))->bit1
++	#define PRSC0  ((struct __hc08_bits *)(&PCTL2))->bit0
++
++_VOLXDATA _UINT8 __at 0x22 FCR;  /* PWM Control Register 1 */
++	#define FINT4   ((struct __hc08_bits *)(&FCR))->bit7
++	#define FMODE4  ((struct __hc08_bits *)(&FCR))->bit6
++	#define FINT3   ((struct __hc08_bits *)(&FCR))->bit5
++	#define FMODE3  ((struct __hc08_bits *)(&FCR))->bit4
++	#define FINT2   ((struct __hc08_bits *)(&FCR))->bit3
++	#define FMODE2  ((struct __hc08_bits *)(&FCR))->bit2
++	#define FINT1   ((struct __hc08_bits *)(&FCR))->bit1
++	#define FMODE1  ((struct __hc08_bits *)(&FCR))->bit0
++
++_VOLXDATA _UINT8 __at 0x23 FSR;  /* PWM Control Register 1 */
++	#define FPIN4  ((struct __hc08_bits *)(&FSR))->bit7
++	#define FFLAG4 ((struct __hc08_bits *)(&FSR))->bit6
++	#define FPIN3  ((struct __hc08_bits *)(&FSR))->bit5
++	#define FFLAG3 ((struct __hc08_bits *)(&FSR))->bit4
++	#define FPIN2  ((struct __hc08_bits *)(&FSR))->bit3
++	#define FFLAG2 ((struct __hc08_bits *)(&FSR))->bit2
++	#define FPIN1  ((struct __hc08_bits *)(&FSR))->bit1
++	#define FFLAG1 ((struct __hc08_bits *)(&FSR))->bit0
++
++_VOLXDATA _UINT8 __at 0x24 FTACK;  /* PWM Control Register 1 */
++	/* RESERVED*/
++	#define FTACK4	((struct __hc08_bits *)(&FTACK))->bit6
++	/* RESERVED */
++	#define FTACK3   ((struct __hc08_bits *)(&FTACK))->bit4
++	/* RESERVED */
++	#define FTACK2   ((struct __hc08_bits *)(&FTACK))->bit2
++	/* RESERVED */
++	#define FTACK1   ((struct __hc08_bits *)(&FTACK))->bit0
++
++
++_VOLXDATA _UINT8 __at 0x25 PWMOUT;  /* PWM Control Register 1 */
++	/* RESERVED*/
++	#define POUTCTL ((struct __hc08_bits *)(&PWMOUT))->bit6
++	#define POUT5   ((struct __hc08_bits *)(&PWMOUT))->bit5
++	#define POUT4   ((struct __hc08_bits *)(&PWMOUT))->bit4
++	#define POUT3   ((struct __hc08_bits *)(&PWMOUT))->bit3
++	#define POUT2   ((struct __hc08_bits *)(&PWMOUT))->bit2
++	#define POUT1   ((struct __hc08_bits *)(&PWMOUT))->bit1
++	#define POUT0   ((struct __hc08_bits *)(&PWMOUT))->bit0
++
++_VOLXDATA _UINT8 __at 0x26 PCNTH;  /* PWM Counter Register */
++_VOLXDATA _UINT8 __at 0x27 PCNTL;  /* PWM Counter Register */
++
++_VOLXDATA _UINT8 __at 0x28 PMODH;  /* PWM Counter Modulo Register */
++_VOLXDATA _UINT8 __at 0x29 PMODL;  /* PWM Counter Modulo Register */
++
++_VOLXDATA _UINT8 __at 0x2A PVAL1H;  /* PWM Value 1 Register */
++_VOLXDATA _UINT8 __at 0x2B PVAL1L;  /* PWM Value 1 Register */
++_VOLXDATA _UINT8 __at 0x2C PVAL2H;  /* PWM Value 1 Register */
++_VOLXDATA _UINT8 __at 0x2D PVAL2L;  /* PWM Value 1 Register */
++_VOLXDATA _UINT8 __at 0x2E PVAL3H;  /* PWM Value 1 Register */
++_VOLXDATA _UINT8 __at 0x2F PVAL3L;  /* PWM Value 1 Register */
++_VOLXDATA _UINT8 __at 0x30 PVAL4H;  /* PWM Value 1 Register */
++_VOLXDATA _UINT8 __at 0x31 PVAL4L;  /* PWM Value 1 Register */
++_VOLXDATA _UINT8 __at 0x32 PVAL5H;  /* PWM Value 1 Register */
++_VOLXDATA _UINT8 __at 0x33 PVAL5L;  /* PWM Value 1 Register */
++_VOLXDATA _UINT8 __at 0x34 PVAL6H;  /* PWM Value 1 Register */
++_VOLXDATA _UINT8 __at 0x35 PVAL6L;  /* PWM Value 1 Register */
++
++_VOLXDATA _UINT8 __at 0x36 DEADTM;  /* PWM DEAD TIME Register */
++_VOLXDATA _UINT8 __at 0x37 DISMAP;  /* PWM DISABLE MAPPING Register */
++
++
++
++/*------------------*/
++/* SCI REGISTERS    */
++/*------------------*/
++
++_VOLDATA _UINT8 __at 0x38 SCC1;  /* SCI Control Register 1 */
++	#define LOOPS  ((struct __hc08_bits *)(&SCC1))->bit7
++	#define ENSCI  ((struct __hc08_bits *)(&SCC1))->bit6
++	#define TXINV  ((struct __hc08_bits *)(&SCC1))->bit5
++	#define M      ((struct __hc08_bits *)(&SCC1))->bit4
++	#define WAKE   ((struct __hc08_bits *)(&SCC1))->bit3
++	#define ILTY   ((struct __hc08_bits *)(&SCC1))->bit2
++	#define PEN    ((struct __hc08_bits *)(&SCC1))->bit1
++	#define PTY    ((struct __hc08_bits *)(&SCC1))->bit0
++
++
++_VOLDATA _UINT8 __at 0x39 SCC2;  /* SCI Control Register 2 */
++	#define SCTIE  ((struct __hc08_bits *)(&SCC2))->bit7
++	#define TCIE   ((struct __hc08_bits *)(&SCC2))->bit6
++	#define SCRIE  ((struct __hc08_bits *)(&SCC2))->bit5
++	#define ILIE   ((struct __hc08_bits *)(&SCC2))->bit4
++	#define TE     ((struct __hc08_bits *)(&SCC2))->bit3
++	#define RE     ((struct __hc08_bits *)(&SCC2))->bit2
++	#define WRU    ((struct __hc08_bits *)(&SCC2))->bit1
++	#define SBK    ((struct __hc08_bits *)(&SCC2))->bit0
++
++_VOLDATA _UINT8 __at 0x3A SCC3;  /* SCI Control Register 3 */
++	#define SCC3_R8 ((struct __hc08_bits *)(&SCC3))->bit7
++	#define SCC3_TB ((struct __hc08_bits *)(&SCC3))->bit6
++	#define DMARE   ((struct __hc08_bits *)(&SCC3))->bit5
++	#define DMATE   ((struct __hc08_bits *)(&SCC3))->bit4
++	#define ORIE    ((struct __hc08_bits *)(&SCC3))->bit3
++	#define NEIE    ((struct __hc08_bits *)(&SCC3))->bit2
++	#define FEIE    ((struct __hc08_bits *)(&SCC3))->bit1
++	#define PEIE    ((struct __hc08_bits *)(&SCC3))->bit0
++
++_VOLDATA _UINT8 __at 0x3B SCS1;  /* SCI Status Register 1 */
++	#define SCTE  ((struct __hc08_bits *)(&SCS1))->bit7
++	#define TC    ((struct __hc08_bits *)(&SCS1))->bit6
++	#define SCRF  ((struct __hc08_bits *)(&SCS1))->bit5
++	#define IDLE  ((struct __hc08_bits *)(&SCS1))->bit4
++	#define OR    ((struct __hc08_bits *)(&SCS1))->bit3
++	#define NF    ((struct __hc08_bits *)(&SCS1))->bit2
++	#define FE    ((struct __hc08_bits *)(&SCS1))->bit1
++	#define PE    ((struct __hc08_bits *)(&SCS1))->bit0
++
++_VOLDATA _UINT8 __at 0x3C SCS2;  /* SCI Status Register 2 */
++	#define RPF  ((struct __hc08_bits *)(&SCS2))->bit0
++	#define BKF  ((struct __hc08_bits *)(&SCS2))->bit1
++  /*  Bits 2-7 not implemented	*/
++
++_VOLDATA _UINT8 __at 0x3D SCDR;  /* SCI Data Register */
++
++_VOLDATA _UINT8 __at 0x3E SCBR;  /* SCI Baud Rate Register */
++	#define SCP1  ((struct __hc08_bits *)(&SCBR))->bit5
++	#define SCP0  ((struct __hc08_bits *)(&SCBR))->bit4
++	#define R     ((struct __hc08_bits *)(&SCBR))->bit3
++	#define SCR2  ((struct __hc08_bits *)(&SCBR))->bit2
++	#define SCR1  ((struct __hc08_bits *)(&SCBR))->bit1
++	#define SCR0  ((struct __hc08_bits *)(&SCBR))->bit0
++	/*-- Bits 6 and 7 do not exist */
++
++
++/*------------------*/
++/* IRQ REGISTERS    */
++/*------------------*/
++_VOLDATA _UINT8 __at 0x3F ISCR;	/* IRQ status/control       */
++	#define IRQF1  ((struct __hc08_bits *)(&ISCR))->bit3
++	#define ACK1   ((struct __hc08_bits *)(&ISCR))->bit2
++	#define IMASK1 ((struct __hc08_bits *)(&ISCR))->bit1
++	#define MODE1  ((struct __hc08_bits *)(&ISCR))->bit0
++	/* Bits 4-7 unimplemented */
++
++
++/*------------------*/
++/* ADC REGISTERS    */
++/*------------------*/
++
++_VOLDATA _UINT8 __at 0x40 ADSCR; /* Analog-to-Digital Status and Control Reg. */
++	#define COCO  ((struct __hc08_bits *)(&ADSCR))->bit7
++	#define AIEN  ((struct __hc08_bits *)(&ADSCR))->bit6
++	#define ADCO  ((struct __hc08_bits *)(&ADSCR))->bit5
++	#define ADCH4 ((struct __hc08_bits *)(&ADSCR))->bit4
++	#define ADCH3 ((struct __hc08_bits *)(&ADSCR))->bit3
++	#define ADCH2 ((struct __hc08_bits *)(&ADSCR))->bit2
++	#define ADCH1 ((struct __hc08_bits *)(&ADSCR))->bit1
++	#define ADCH0 ((struct __hc08_bits *)(&ADSCR))->bit0
++
++_VOLDATA _UINT16 __at 0x41 ADR;    /* Analog-to-Digital Data Register  */
++_VOLDATA _UINT8  __at 0x41 ADRH;   /* Analog-to-Digital Data Register  */
++_VOLDATA _UINT8  __at 0x42 ADRL;   /* Analog-to-Digital Data Register  */
++
++_VOLDATA _UINT8 __at 0x43 ADCLK; /* Analog-to-Digital Clock */
++	#define ADIV2  ((struct __hc08_bits *)(&ADCLK))->bit7
++	#define ADIV1  ((struct __hc08_bits *)(&ADCLK))->bit6
++	#define ADIV0  ((struct __hc08_bits *)(&ADCLK))->bit5
++	#define ADICLK ((struct __hc08_bits *)(&ADCLK))->bit4
++	#define MODE1  ((struct __hc08_bits *)(&ADCLK))->bit3
++	#define MODE0  ((struct __hc08_bits *)(&ADCLK))->bit2
++	/* Bits 0-1 unimplemented */
++
++/*------------------*/
++/* SPI REGISTERS    */
++/*------------------*/
++
++_VOLDATA _UINT8 __at 0x44 SPCR;   /* SPI Control Register */
++	#define SPRIE  ((struct __hc08_bits *)(&SPCR))->bit7
++	/* undefined */
++	#define SPMSTR ((struct __hc08_bits *)(&SPCR))->bit5
++	#define CPOL   ((struct __hc08_bits *)(&SPCR))->bit4
++	#define CPHA   ((struct __hc08_bits *)(&SPCR))->bit3
++	#define SPWOM  ((struct __hc08_bits *)(&SPCR))->bit2
++	#define SPE    ((struct __hc08_bits *)(&SPCR))->bit1
++	#define SPTIE  ((struct __hc08_bits *)(&SPCR))->bit0
++
++_VOLDATA _UINT8 __at 0x45 SPSCR;  /* SPI Status and Control Register */
++	#define SPRF   ((struct __hc08_bits *)(&SPSCR))->bit7
++	#define ERRIE  ((struct __hc08_bits *)(&SPSCR))->bit6
++	#define OVRF   ((struct __hc08_bits *)(&SPSCR))->bit5
++	#define MODF   ((struct __hc08_bits *)(&SPSCR))->bit4
++	#define SPTE   ((struct __hc08_bits *)(&SPSCR))->bit3
++	#define MODFEN ((struct __hc08_bits *)(&SPSCR))->bit2
++	#define SPR1   ((struct __hc08_bits *)(&SPSCR))->bit1
++	#define SPR0   ((struct __hc08_bits *)(&SPSCR))->bit0
++
++_VOLDATA _UINT8 __at 0x46 SPDR;   /* SPI Data Register */
++
++
++/*------------------*/
++/* TIM B REGISTERS  */
++/*------------------*/
++
++_VOLDATA _UINT8 __at 0x51 TBSC;     /* TIMB Status and Control */
++  #define TBPS0   ((struct __hc08_bits *)(&TBSC))->bit0
++  #define TBPS1   ((struct __hc08_bits *)(&TBSC))->bit1
++  #define TBPS2   ((struct __hc08_bits *)(&TBSC))->bit2
++  #define TBTRST  ((struct __hc08_bits *)(&TBSC))->bit4
++  #define TBTSTOP ((struct __hc08_bits *)(&TBSC))->bit5
++  #define TBTOIE  ((struct __hc08_bits *)(&TBSC))->bit6
++  #define TBTOF   ((struct __hc08_bits *)(&TBSC))->bit7
++
++_VOLDATA _UINT16 __at 0x52 TBCNT;   /* TIMB Counter High & Low Registers */
++_VOLDATA _UINT8  __at 0x52 TBCNTH;  /* TIMB Counter Register High */
++_VOLDATA _UINT8  __at 0x53 TBCNTL;  /* TIMB Counter Register Low */
++
++_VOLDATA _UINT16 __at 0x54 TBMOD;    /* TIMB Counter Modulo High & Low Registers */
++_VOLDATA _UINT8  __at 0x54 TBMODH;   /* TIMB Counter Modulo Register High */
++_VOLDATA _UINT8  __at 0x55 TBMODL;   /* TIMB Counter Modulo Register Low */
++
++_VOLDATA _UINT8 __at 0x56 TBSC0;    /* TIMB Channel 0 Status and Control Register */
++  #define TBCH0MAX ((struct __hc08_bits *)(&TBSC0))->bit0
++  #define TBTOV0   ((struct __hc08_bits *)(&TBSC0))->bit1
++  #define TBELS0A  ((struct __hc08_bits *)(&TBSC0))->bit2
++  #define TBELS0B  ((struct __hc08_bits *)(&TBSC0))->bit3
++  #define TBMS0A   ((struct __hc08_bits *)(&TBSC0))->bit4
++  #define TBMS0B   ((struct __hc08_bits *)(&TBSC0))->bit5
++  #define TBCH0IE  ((struct __hc08_bits *)(&TBSC0))->bit6
++  #define TBCH0F   ((struct __hc08_bits *)(&TBSC0))->bit7
++
++_VOLDATA _UINT16 __at 0x57 TBCH0;    /* TIMB Channel 0 High & Low Registers */
++_VOLDATA _UINT8  __at 0x57 TBCH0H;   /* TIMB Channel 0 Register High */
++_VOLDATA _UINT8  __at 0x58 TBCH0L;   /* TIMB Channel 0 Register Low */
++
++_VOLDATA _UINT8 __at 0x59 TBSC1;    /* TIMB Channel 1 Status and Control Register */
++  #define TBCH1MAX ((struct __hc08_bits *)(&TBSC1))->bit0
++  #define TBTOV1   ((struct __hc08_bits *)(&TBSC1))->bit1
++  #define TBELS1A  ((struct __hc08_bits *)(&TBSC1))->bit2
++  #define TBELS1B  ((struct __hc08_bits *)(&TBSC1))->bit3
++  #define TBMS1A   ((struct __hc08_bits *)(&TBSC1))->bit4
++  #define TBCH1IE  ((struct __hc08_bits *)(&TBSC1))->bit6
++  #define TBCH1F   ((struct __hc08_bits *)(&TBSC1))->bit7
++
++_VOLDATA _UINT16 __at 0x5A  TBCH1;   /* TIMB Channel 1 High & Low Registers */
++_VOLDATA _UINT8  __at 0x5A  TBCH1H;  /* TIMB Channel 1 Register High */
++_VOLDATA _UINT8  __at 0x5B  TBCH1L;  /* TIMB Channel 1 Register Low */
++
++
++/** PLL **/
++_VOLDATA _UINT8 __at 0x5C PCTL;  /* PLL Control Register */
++	#define PLLIE ((struct __hc08_bits *)(&PCTL))->bit7
++	#define PLLF  ((struct __hc08_bits *)(&PCTL))->bit6
++	#define PLLON ((struct __hc08_bits *)(&PCTL))->bit5
++	#define BCS   ((struct __hc08_bits *)(&PCTL))->bit4
++
++_VOLDATA	_UINT8 __at 0x5D PBWC;  /* PLL Bandwidth Control Register */
++	#define AUTO ((struct __hc08_bits *)(&PBWC))->bit7
++	#define LOCK ((struct __hc08_bits *)(&PBWC))->bit6
++	#define ACQ  ((struct __hc08_bits *)(&PBWC))->bit5
++	#define XLD  ((struct __hc08_bits *)(&PBWC))->bit4
++	/* Bits 1-4, Unimplemented */
++	/* Bit 0, Reserved         */
++
++_VOLDATA	_UINT8 __at 0x5E PPG;  /* PLL Program Register */
++	#define MUL7 ((struct __hc08_bits *)(&PPG))->bit7
++	#define MUL6 ((struct __hc08_bits *)(&PPG))->bit6
++	#define MUL5 ((struct __hc08_bits *)(&PPG))->bit5
++	#define MUL4 ((struct __hc08_bits *)(&PPG))->bit4
++	#define VRS7 ((struct __hc08_bits *)(&PPG))->bit3
++	#define VRS6 ((struct __hc08_bits *)(&PPG))->bit2
++	#define VRS5 ((struct __hc08_bits *)(&PPG))->bit1
++	#define VRS4 ((struct __hc08_bits *)(&PPG))->bit0
++
++
++/** SIM **/
++_VOLXDATA _UINT8 __at 0xFE00 SBSR;     /* SIM Break Status Register */
++  #define SBSW ((struct __hc08_bits *)(&SBSR))->bit1
++
++_VOLXDATA _UINT8 __at 0xFE01 SRSR;    /* SIM Reset Status Register */
++  #define LVI    ((struct __hc08_bits *)(&SRSR))->bit1
++  #define MODRST ((struct __hc08_bits *)(&SRSR))->bit2
++  #define ILAD   ((struct __hc08_bits *)(&SRSR))->bit3
++  #define ILOP   ((struct __hc08_bits *)(&SRSR))->bit4
++  #define COP    ((struct __hc08_bits *)(&SRSR))->bit5
++  #define PIN    ((struct __hc08_bits *)(&SRSR))->bit6
++  #define POR    ((struct __hc08_bits *)(&SRSR))->bit7
++  /* Bit 0 unimplemented */
++
++
++_VOLXDATA _UINT8 __at 0xFE03 SBFCR;    /* SIM Break Flag Control Register */
++  #define BFCE ((struct __hc08_bits *)(&BFCR))->bit7
++
++_VOLXDATA _UINT8 __at 0xFE08 FLCR;    /* FLASH Control Register */
++  #define PGM   ((struct __hc08_bits *)(&FLCR))->bit0
++  #define ERASE ((struct __hc08_bits *)(&FLCR))->bit1
++  #define MASS  ((struct __hc08_bits *)(&FLCR))->bit2
++  #define HVEN  ((struct __hc08_bits *)(&FLCR))->bit3
++
++_VOLXDATA _UINT16 __at 0xFE0C BRK;    /* Break Address High & Low Registers */
++_VOLXDATA _UINT8 __at 0xFE0D BRKH;    /* Break Address High Register */
++_VOLXDATA _UINT8 __at 0xFE0E BRKL;    /* Break Address Low Register */
++
++_VOLXDATA _UINT8 __at 0xfe0b BRKSCR;  /* Break Status and Control Register */
++  #define BRKA ((struct __hc08_bits *)(&BRKSCR))->bit6
++  #define BRKE ((struct __hc08_bits *)(&BRKSCR))->bit7
++
++
++_VOLXDATA _UINT8 __at 0xfe0f LVISR;   /* Low voltage detect */
++	#define LVIOUT ((struct __hc08_bits *)(&LVISR))->bit7
++	#define TRPSEL ((struct __hc08_bits *)(&LVISR))->bit5
++
++_VOLXDATA _UINT8 __at 0xFF7E FLBPR;    /* FLASH Block Protect Register */
++  #define BPR0 ((struct __hc08_bits *)(&FLBPR))->bit0
++  #define BPR1 ((struct __hc08_bits *)(&FLBPR))->bit1
++  #define BPR2 ((struct __hc08_bits *)(&FLBPR))->bit2
++  #define BPR3 ((struct __hc08_bits *)(&FLBPR))->bit3
++  #define BPR4 ((struct __hc08_bits *)(&FLBPR))->bit4
++  #define BPR5 ((struct __hc08_bits *)(&FLBPR))->bit5
++  #define BPR6 ((struct __hc08_bits *)(&FLBPR))->bit6
++  #define BPR7 ((struct __hc08_bits *)(&FLBPR))->bit7
++
++
++_VOLXDATA _UINT8 __at 0xffff COPCTL;  /* COP Control Register */
++
++
++#define		_isrNo_SCItransmit	22
++#define		_isrNo_SCIreceive	21
++#define		_isrNo_SCIerror		20
++#define		_isrNo_SPItransmit	19
++#define		_isrNo_SPIreceive	18
++#define		_isrNo_ADC			17
++#define		_isrNo_TIMOVF		16
++#define		_isrNo_TIM1			15
++#define		_isrNo_TIM0			14
++#define		_isrNo_TimAOvf		13
++#define		_isrNo_TimACh3		12
++#define		_isrNo_TimACh2		11
++#define		_isrNo_TimACh1		10
++#define		_isrNo_TimACh0		9
++#define		_isrNo_PWMmc		8
++#define		_isrNo_Fault4		7
++#define		_isrNo_Fault3		6
++#define		_isrNo_Fault2		5
++#define		_isrNo_Fault1		4
++#define		_isrNo_PLL			3
++#define		_isrNo_IRQ			2
++#define		_isrNo_SWI			1
++#define		_isrNo_RESET		0
++
++
++
++#endif

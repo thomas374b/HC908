@@ -67,14 +67,18 @@ const static uint8_t  _row_offsets[_numlines] =
 
 
 /**
- * write to and read from display via SPI
+ * low level transport write to and read from display via SPI
+ * data to be sent has to be filled into mcc315_data.transferBuf[0] before calling this
+ * @returns 3 if data have been read successfully from the device 0 otherwise or after write
  */
 uint8_t mcc315lcd_transport(hd44780_write_mode_e mode)
 {
 	SPI_LCD_SS = 0;	// pull slave select wire low, shared with one row of key-matrix
 	uDelay150();
 
+	// the LCD is little endian and we are big
 	uint8_t br = bitreversed(mcc315_data.transferBuf[0]);
+
 	mcc315_data.transferBuf[0] = br;
 	uint8_t sent = 0;
 
@@ -348,7 +352,9 @@ void mcc315lcd_writeSymbol(uint8_t idx)
 }
 
 
-
+/**
+ * switch the LCD to standard function set
+ */
 void mcc315lcd_standard()
 {
 	mcc315lcd_command(lcd_FUNCTIONSET | lcd_8BITMODE | lcd_2LINE /*| lcd_Extra | lcd_5x10DOTS | lcd_Inverse*/); // 0x38
@@ -464,7 +470,9 @@ inline void mcc315lcd_init()
 #endif
 }
 
-
+/**
+ * set or clear any of the 5 special symbols
+ */
 void mcc315lcd_setSymbol(top_row_symbols_e sym, top_row_attr_e attr)
 {
 	uint8_t ci = sym & symCache;
@@ -472,7 +480,6 @@ void mcc315lcd_setSymbol(top_row_symbols_e sym, top_row_attr_e attr)
 	if (ci != 0) {
 		ci >>= 5;
 	}
-
 	uint8_t flag = (sym & symMASK) | (attr & symBLINK);
 	uint8_t delta = mcc315_data.symbolCache[ci] ^ flag;
 
@@ -491,28 +498,34 @@ void mcc315lcd_setSymbol(top_row_symbols_e sym, top_row_attr_e attr)
 }
 
 
-
-void mcc315lcd_setRotor(uint8_t count, top_row_attr_e blink)
+/**
+ * set or clear any of the 6 rotary symbols via @param bitmask (0x3F)
+ */
+void mcc315lcd_setRotor(uint8_t bitmask, top_row_attr_e blink)
 {
-	mcc315lcd_command(0x3F);
+	mcc315lcd_command(0x3F);	// extended function set
 
 	uint8_t mask = 0x01;
 	uint8_t i = 0;
 
-	mcc315_data.symbolCache[0] = (count & 0x1F) | blink;
+	mcc315_data.symbolCache[0] = (bitmask & 0x1F) | blink;
 	mcc315lcd_writeSymbol(0);
 
-	if (count & 0x20) {
+	if (bitmask & 0x20) {
 		mcc315lcd_setSymbol(symRotor5, symON | blink);
 	} else {
 		mcc315_data.symbolCache[1] = 0;
 		mcc315lcd_writeSymbol(1);
 	}
 
-//	mcc315lcd_command(0x38);
-	mcc315lcd_standard();
+	mcc315lcd_standard();		// return to standard function set
 }
 
+/**
+ * set the propeller symbol to an angle corresponding to param @count
+ * there are 3 angles available, same count % 3 will return in same position (i.e. no move)
+ * if @param left is > 0 then the propeller animation rotates left otherwise right
+ */
 void mcc315lcd_setPropeller(uint8_t count, uint8_t left)
 {
 	uint8_t pi = count % 3;
@@ -537,13 +550,12 @@ void mcc315lcd_setPropeller(uint8_t count, uint8_t left)
 			mcc315_data.symbolCache[1] = symRotor5 | blink;
 			break;
 	}
-	mcc315lcd_command(0x3F);
+	mcc315lcd_command(0x3F);	// extended function set
 
 	mcc315lcd_writeSymbol(0);
 	mcc315lcd_writeSymbol(1);
 
-//	mcc315lcd_command(0x38);
-	mcc315lcd_standard();
+	mcc315lcd_standard();		// return to standard function set
 }
 
 void mcc315lcd_writeString(uint8_t *addr)
