@@ -1,6 +1,6 @@
 
 
-	.IFNCONST	REGS_68HC908JK1
+	#ifndef	REGS_68HC908JK1
 
 REGS_68HC908JK1	.EQU	1
 
@@ -74,8 +74,8 @@ _vect_IRQ		.EQU	$FFFA
 _vect_SWI		.EQU	$FFFC
 _vect_RESET		.EQU	$FFFE
 
-	.ENDIF
+	#endif
 
-	.INCLUDE bits68hc908.asm
+	#include	"bits68hc908.asm"
 
 

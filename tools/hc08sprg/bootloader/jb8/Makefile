@@ -3,9 +3,7 @@ BOARD = usb08
 VARIANT = jb8
 BAUD = 9600
 COLS = 32
-
-
-include .CPU
+TARGET = slfprgJB8
 
 # end of application flash, start of bootloader
 FLASH_END = 0xF9E0
@@ -13,30 +11,8 @@ FLASH_END = 0xF9E0
 # VECTOR_MODE_ARG = 65536 - FLASH_END - TABLE_SIZE - COLS
 VECTOR_MODE = -z 384
 
-DEFINES += -DRAM_START=$(NATIVE_RAM_START)
-DEFINES += -DRAM_SIZE=$(NATIVE_RAM_SIZE)
-DEFINES += -DFLASH_START=$(FLASH_START)
-DEFINES += -DFLASH_SIZE=$(FLASH_SIZE)
+include common.mk
 
-DEFINES += -DUSE_PLL_CLOCK=0 -DPLATFORM=9
-DEFINES += -DFLASH_END=$(FLASH_END)
+common.mk:
+	ln -s ../common.mk
 
-DEPEND = board.asm platform.asm macros.asm fancy_macros.asm bits68hc908.asm mc68hc908$(VARIANT).asm reg68hc908$(VARIANT).asm .CPU
-
-TARGET = slfprgJB8
-
-all: $(TARGET)-final.s19
-
-%.bin: %.asm $(DEPEND) Makefile .mklinks.mk
-	@echo dasm $* \-\> $@
-	@dasm $*.asm -v3 -f3 -o$@ -l$*.lst $(DEFINES)
-
-clean:
-	rm -f *.lst *.bin *.s19 flash.mk $(DEPEND)
-
-include .mklinks.mk
-
-$(TARGET)-final.s19: $(TARGET).bin
-	Bin2S19 -v -f $(TARGET).bin -c $(COLS) -b $(FLASH_END) $(VECTOR_MODE) -s >$(TARGET)-final.s19
-
-include flash.mk

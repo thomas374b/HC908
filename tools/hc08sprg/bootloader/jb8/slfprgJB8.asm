@@ -35,11 +35,11 @@
  
 RCS_ENA         .EQU     1     		; READ COMMAND SUPPORTED?
  
-  .IF RCS_ENA != 0
+  #if RCS_ENA != 0
 RCS             .EQU     $80   		; READ COMMAND SUPPORTED
-  .ELSE
+  #else
 RCS             .EQU     0     		; READ COMMAND unSUPPORTED
-  .ENDIF
+  #endif
  
 VER_NUM         .EQU     1     		; FC protocol version number
 
@@ -63,70 +63,47 @@ DATA            .EQU     RAM_START+$0C
 
 
 ;************************************************************************** 
-;            .IF PLATFORM = 1
-; 				.INCLUDE	platform1.asm
-;            .ENDIF
-;            .IF PLATFORM = 2
-; 				.INCLUDE	platform2.asm
-;            .ENDIF
-;            .IF PLATFORM = 3
-; 				.INCLUDE	platform3.asm
-;            .ENDIF
-;            .IF PLATFORM = 4
-;				.INCLUDE	platform4.asm
-;            .ENDIF
-;            .IF PLATFORM = 5
-;				.INCLUDE	platform5.asm
-;            .ENDIF
-;            .IF PLATFORM = 6
-;            	.INCLUDE	platform6.asm
-;            .ENDIF
-;            .IF PLATFORM = 7
-;				.INCLUDE	platform7.asm
-;            .ENDIF
-;            .IF PLATFORM = 8
-;				.INCLUDE	platform8.asm
-;            .ENDIF
+; different platforms are managed by symbolic links created by Makefile
 ;**************************************************************************
 
-            .IF PLATFORM = 9
-				.INCLUDE	platform.asm
-			.ELSE
-				.ERROR "incomplete platform definition"
-            .ENDIF
+		#if PLATFORM = 9
+			#include	"platform.asm"
+		#else
+			#error	 "incomplete platform definition"
+		#endif
  
 ;************************************************************************** 
 
 ;************************************************************************** 
  
-          .IF RXDISIRQ = 1           ; RXDPORT & RXDPIN is *not* defined
-            .IF SCIRXINV = 1
+          #if RXDISIRQ == 1           ; RXDPORT & RXDPIN is *not* defined
+            #if SCIRXINV == 1
 CONFIG2DEF      .EQU     %10000000     ; pullup on IRQ disabled!   you need hardwired pull-down in fact!
-            .ELSE
+            #else
 CONFIG2DEF      .EQU     %00000000     ; pullup on IRQ enabled!
-            .ENDIF
-          .ELSE
+            #endif
+          #else
 CONFIG2DEF      .EQU     %00000000     ; pullup on IRQ *not* disabled!
 RXDDDR          .EQU     RXDPORT+4
-            .IF RXDPUEN = 1
+            #if RXDPUEN == 1
 RXDPUE          .EQU     RXDPORT+$0B   ; define pull-up enable port
-            .ENDIF
-          .ENDIF
+            #endif
+          #endif
  
 TXDDDR          .EQU     TXDPORT+4
     
 SCITXTICK       .EQU     (BUSCLOCK/SCISPEED)
  
 ;************************************************************************** 
-   .IF RXDISIRQ = 0         ; RXDPORT & RXDPIN is defined
-    .IF (RXDPORT = TXDPORT) & (RXDPIN = TXDPIN)
+   #if RXDISIRQ == 0         ; RXDPORT & RXDPIN is defined
+    #if (RXDPORT == TXDPORT) & (RXDPIN == TXDPIN)
 SINGLEWIRE      .EQU     1             ; do use single-wire feature
-    .ELSE
+    #else
 SINGLEWIRE      .EQU     0             ; do NOT use single-wire feature
-    .ENDIF
-   .ELSE
+    #endif
+   #else
 SINGLEWIRE      .EQU     0             ; do NOT use single-wire feature
-   .ENDIF
+   #endif
 ;******************************************************************************************* 
  
  
@@ -139,73 +116,73 @@ IDENT       .EQU     "I"
  
 T100MS      .EQU     255
  
-       .MACRO ilop
-            	.DC.b    $32             ; this is illegal operation code
-       .ENDM
+	.macro ilop
+		.byte    $32             ; this is illegal operation code
+	.endm
  
-   .MACRO skip1
-            .DC.b    $21             ; braNCH NEVER (saves memory)
-           .ENDM
+	.macro skip1
+		.byte    $21             ; braNCH NEVER (saves memory)
+	.endm
  
-       .MACRO	skip2
-            .DC.b    $65             ; CPHX (saves memory)
-            .ENDM
+	.macro	skip2
+		.byte    $65             ; CPHX (saves memory)
+	.endm
  
-     .MACRO brrxdlo
-     	.IF RXDISIRQ = 1
-      		.IF SCIRXINV = 1
+     .macro brrxdlo
+     	#if RXDISIRQ == 1
+      		#if SCIRXINV == 1
     			bih     {1}       ; branch if RXD low
-      		.ELSE
+      		#else
     			bil     {1}       ; branch if RXD low
-      		.ENDIF
-    	.ELSE    ; RXD uses normal I/O pin
-      		.IF SCIRXINV = 1
+      		#endif
+    	#else    ; RXD uses normal I/O pin
+      		#if SCIRXINV == 1
     			brset   RXDPIN,RXDPORT,{1}    ; branch if RXD low
-      		.ELSE
+      		#else
     			brclr   RXDPIN,RXDPORT,{1}   ; branch if RXD low
-      		.ENDIF
-    	.ENDIF
-     .ENDM
+      		#endif
+    	#endif
+     .endm
  
-    .MACRO	brrxdhi
+    .macro	brrxdhi
  
-    .IF RXDISIRQ = 1
-      .IF SCIRXINV = 1
+    #if RXDISIRQ == 1
+      #if SCIRXINV == 1
     bil     {1}       ; branch if RXD hi
-      .ELSE
+      #else
     bih     {1}       ; branch if RXD hi
-      .ENDIF
-    .ELSE    ; RXD uses normal I/O pin
-      .IF SCIRXINV = 1
+      #endif
+    #else    ; RXD uses normal I/O pin
+      #if SCIRXINV == 1
     brclr   RXDPIN,RXDPORT,{1}    ; branch if RXD hi
-      .ELSE
+      #else
     brset   RXDPIN,RXDPORT,{1}    ; branch if RXD hi
-      .ENDIF
-    .ENDIF
+      #endif
+    #endif
  
-    .ENDM
+    .endm
  
-    .MACRO	txdclr
+    .macro	txdclr
  
-      .IF SCITXINV = 1
+      #if SCITXINV == 1
         bset    TXDPIN,TXDPORT  ; clr bit
-      .ELSE
+      #else
         bclr    TXDPIN,TXDPORT  ; clr bit
-      .ENDIF
+      #endif
  
-        .ENDM
+        .endm
  
-    .MACRO	txdset
+    .macro	txdset
  
-      .IF SCITXINV = 1
+      #if SCITXINV == 1
         bclr    TXDPIN,TXDPORT  ; set bit
-      .ELSE
+      #else
         bset    TXDPIN,TXDPORT  ; set bit
-      .ENDIF
+      #endif
 
 
 
-      .ENDM
+      .endm
          
 TMOD    .EQU     TMODH           ; we use high address for storing all 16 bits at once
  
@@ -222,7 +199,7 @@ TMOD    .EQU     TMODH           ; we use high address for storing all 16 bits a
 
 MY_ZEROPAGE		.EQU		RAM_START
 
-next_var		.SET		RAM_START
+next_var		.set		RAM_START
 
 	declare_var		ONEBIT,2
 	declare_var		BITS,1
@@ -241,10 +218,10 @@ next_var		.SET		RAM_START
 APL_VECT:
 
 PRI:							 ; address of onebit-ticks default value
-		.DC.w    SCITXTICK
-        .DC.w    0
-        .DC.w    0
-        .DC.w    0
+		.word    SCITXTICK
+        .word    0
+        .word    0
+        .word    0
 
 VEC0:   jmp     main            ; vector 0		; RESET ist not an interrupt
 VEC1:   jmp     main            ; vector 1
@@ -256,9 +233,9 @@ VEC6:   jmp     main            ; vector 6
 VEC7:   jmp     main            ; vector 7
 
 ; 		.ORG	FLASH_END					; must align to page erase size
-;		.IF (. - $FA00)
+;		#if (. - $FA00)
 ;			.ERROR "not aligned"
-;		.ENDIF
+;		#endif
 
 ;******************************************************************************************* 
 main:     
@@ -269,11 +246,11 @@ main:
         and     #%10000000              ; mask only POR RESET source
         beq     VEC0                    ; any of these sources, go to self programming
 slfprg:  
-;      .IF CONFIG2DEF = 0
+;      #if CONFIG2DEF == 0
 ;        clr     CONFIG2
-;      .ELSE
+;      #else
 ;        mov     #CONFIG2DEF,CONFIG2     ; from definition
-;      .ENDIF
+;      #endif
         mov     #%10000001,CONFIG1      ; COP disable
  
 ;        ldA     #[[FLASH_END+ERBLK_LEN]/256]
@@ -321,17 +298,17 @@ SCIINIT:
         pulH                            ; [1B]
         stHX    ONEBIT                  ; (2B)
  
-    .IF RXDISIRQ = 0         ; RXDPORT & RXDPIN is defined (not IRQ)
+    #if RXDISIRQ == 0         ; RXDPORT & RXDPIN is defined (not IRQ)
         bclr    RXDPIN,RXDDDR           ; input for RXD
-      .IF RXDPUEN = 1
+      #if RXDPUEN == 1
         bset    RXDPIN,RXDPUE
-      .ENDIF
-    .ENDIF
+      #endif
+    #endif
  
         txdset
-    .IF SINGLEWIRE=0
+    #if SINGLEWIRE == 0
         bset    TXDPIN,TXDDDR           ; (2B) output for TXD
-    .ENDIF
+    #endif
         rts
  
 ;******************************************************************************************* 
@@ -339,7 +316,7 @@ SCIINIT:
 CAUGHT:            ; CAUGHT IN SELF-PROGRAMMING? 
         jsr     SCIRXNOEDGE
  
-      .IF CALENABLED = 1
+      #if CALENABLED == 1
         clrH
         clrX
  
@@ -349,10 +326,10 @@ MONRXD2:
 CHKRXD: 
         brrxdhi         BRKDONE
  
-      .IF RXDISIRQ = 1
+      #if RXDISIRQ == 1
         nop                     ; (1)
         nop                     ; (1)
-      .ENDIF
+      #endif
         aiX     #1              ; (2) INCREMENT THE COUNTER
         bra     CHKRXD          ; (3) GO BACK AND CHECK SIGNAL AGAIN
  
@@ -362,9 +339,9 @@ BRKDONE:
         tXA
         ldX     #$1a            ; calculate speed
         div
-      .ELSE
+      #else
         ldA     #16             ; <<< modify this if no calibration is required (BUS freq in MHz * 4)
-      .ENDIF
+      #endif
               
         stA     CPUSPD
         clr     CTRLBYT         ; no mass erase
@@ -383,9 +360,9 @@ BCKGND:
         cbeqA   ERASE__, ERASE_COM       ; Erase command
         cbeqA   WR_DATA, WR_DATA_COM   ; Write (program) command
         cbeqA   IDENT, IDENT_COM       ; Ident command
-      .IF RCS_ENA = 1
+      #if RCS_ENA == 1
         cbeqA   RD_DATA, RD_DATA_COM   ; Read command
-      .ENDIF
+      #endif
  
         ; if no valid command found (including Quit) 
         ; generate reset too! 
@@ -414,7 +391,7 @@ WRITE_LOOP:                     ; Start address in HX, length in LEN
         dbnz    LEN, WRITE_LOOP
         rts
 ;******************************************************************************************* 
-      .IF RCS_ENA = 1
+      #if RCS_ENA == 1
 RD_DATA_COM: 
  
         bsr     READ
@@ -428,7 +405,7 @@ RD_DATA_COM:
         bsr     WRITE_LOOP
  
         bra     BCKGND          ; finish without ACK
-      .ENDIF
+      #endif
 ;******************************************************************************************* 
 GETADDR: 
         bsr     READ
@@ -531,9 +508,9 @@ SCITX1: brclr   7,TSC,SCITX1    ; wait for TOF
 EPILOG: 
         mov     #%00110000,TSC  ; stop & reset timer
  
-    .IF SINGLEWIRE=1
+    #if SINGLEWIRE == 1
         bclr    TXDPIN,TXDDDR           ; (2B) input for TXD (shared with RXD)
-    .ENDIF
+    #endif
         pulX
         pulH
         rts
@@ -548,9 +525,9 @@ WRITE:
         ldHX    ONEBIT          ; (2B)
         stHX    TMOD            ; (2B)
 
-    .IF SINGLEWIRE=1
+    #if SINGLEWIRE == 1
         bset    TXDPIN,TXDDDR   ; (2B) output for TXD
-    .ENDIF
+    #endif
 
         mov     #%00010000,TSC  ; (3B) initialize prescalers, reset & run the timer
         jmp     page3           ; (3B) total 14 (of 14)
@@ -559,10 +536,10 @@ WRITE:
 ;*******************************************************************************************
 
 SCIAPI:
-        .DC.w    SCIINIT         ; address of WRITE call
-        .DC.w    READ            ; address of READ call
-        .DC.w    WRITE           ; address of WRITE call
-        .DC.w    ONEBIT          ; address of ONEBIT variable
+        .word    SCIINIT         ; address of WRITE call
+        .word    READ            ; address of READ call
+        .word    WRITE           ; address of WRITE call
+        .word    ONEBIT          ; address of ONEBIT variable
 
 ID_STRING2:
         idents_
@@ -575,21 +552,21 @@ FL1_PROT_ROM:	;SECTION
 ;
 ; 14 bytes
 ID_STRING1:
-        .DC.b    VER_NUM | RCS   ; version number & "Read command supported" flag
-        .DC.w    FLASH_START     ; Start ADDRESS OF FLASH
-        .DC.w    FLASH_END       ; END ADDRESS OF FLASH
-        .DC.w    APL_VECT        ; POINTER TO APPLICATION VECTOR TABLE
-        .DC.w    INT_VECT        ; POINTER TO BEGINING OF FLASH INT. VECTORS
-        .DC.w    ERBLK_LEN       ; ERASE BLCK LENGTH OF FLASH ALG.
-        .DC.w    WRBLK_LEN       ; WRITE BLCK LENGTH OF FLASH ALG.
+        .byte    VER_NUM | RCS   ; version number & "Read command supported" flag
+        .word    FLASH_START     ; Start ADDRESS OF FLASH
+        .word    FLASH_END       ; END ADDRESS OF FLASH
+        .word    APL_VECT        ; POINTER TO APPLICATION VECTOR TABLE
+        .word    INT_VECT        ; POINTER TO BEGINING OF FLASH INT. VECTORS
+        .word    ERBLK_LEN       ; ERASE BLCK LENGTH OF FLASH ALG.
+        .word    WRBLK_LEN       ; WRITE BLCK LENGTH OF FLASH ALG.
 ID_STRING1_END:
-		.DC.b	 0
+		.byte	 0
 
 
 SCI_PROT_ROM:	;SECTION
 ; 2 bytes 
 SCIAPIREF: 
-        .DC.w    SCIAPI          ; this address holds the Start of SCI API table
+        .word    SCIAPI          ; this address holds the Start of SCI API table
                                 ; this is an address of READ call, 
                                 ; WRITE call is 2 bytes higher 
    
@@ -608,7 +585,7 @@ SCIAPIREF:
 	declare_vector _vect_RESET	,main
 
 
-.END
+	.end
 
 
 

@@ -32,17 +32,18 @@
 ; 
 ; HEADER_END 
 
+		.trace
 
-		.INCLUDE	fancy_macros.asm
- 
+		#include	"fancy_macros.asm"
+
 RCS_ENA         			.EQU	1     	; READ COMMAND SUPPORTED?
 WITH_RESIDENT_BUSY_LOOP		.EQU	0		; not enough space available
  
-  .IF RCS_ENA != 0
+  #if (RCS_ENA != 0)
 RCS             .EQU     $80   		; READ COMMAND SUPPORTED
-  .ELSE
+  #else
 RCS             .EQU     0     		; READ COMMAND unSUPPORTED
-  .ENDIF
+  #endif
  
 VER_NUM         .EQU     1     		; FC protocol version number
 
@@ -64,11 +65,11 @@ VER_NUM         .EQU     1     		; FC protocol version number
 
 ;**************************************************************************
 
-            .IF PLATFORM = 9
-				.INCLUDE	platform.asm
-		.ELSE
-				.ERROR "incomplete platform definition"
-            .ENDIF
+		#if (PLATFORM == 9)
+			#include	"platform.asm"
+		#else
+			#error "incomplete platform definition"
+		#endif
  
 ;************************************************************************** 
 
@@ -101,26 +102,26 @@ T10MS	  	.EQU		17
 T100MS_      .EQU     	255
 
  ;*******************************************************************************************
-		.MACRO	d_ms
+		.macro	d_ms
   			ldA	{1}		  		; [2] ||
 _L2_{2}:	clrX		  		; [1] ||
 _L1_{2}:
 			dbnzX	_L1_{2}		; [3] |    256*3 = 768T
   			dbnzA	_L2_{2}		; [3] || (768+3)*(arg-1) + 2 T
-  		.ENDM
+  		.endm
 
-		.MACRO d_us
+		.macro d_us
   			ldA	{1}				; [2]
 _L1_{2}:
   			dbnzA	_L1_{2}		; [3] 3*(arg-1) + 2 T
-  		.ENDM
+  		.endm
 
 ;*******************************************************************************************
 
 
-    .MACRO ilop
-         	.DC.b    $32             ; this is illegal operation code
-    .ENDM
+    .macro ilop
+         	.byte    $32             ; this is illegal operation code
+    .endm
  
  
 ;*******************************************************************************************
@@ -133,13 +134,13 @@ DYN_RAM_CODE_SIZE	.EQU	0x50		; max of { ERASE_ALG_SIZE, PRG_ALG_SIZE } +16 byte 
 
 MY_ZEROPAGE		.EQU		RAM_START
 
-next_var		.SET		RAM_START
+next_var		.set		RAM_START
 
-	declare_var		ADRS,2
+		declare_var		ADRS,2
 		declare_var		POM,1
-	declare_var		LEN,1
+		declare_var		LEN,1
 		declare_var		STAT,1
-	declare_var		STSRSR,1
+		declare_var		STSRSR,1
 		declare_var		STACK,2
 		declare_var		SOURCE,2
 
@@ -160,7 +161,7 @@ next_var		.SET		RAM_START
 
 TESTING		.EQU 	0			; must be zero for production version
 
-		.IF TESTING > 0
+		#if (TESTING > 0)
 ; verrückter
 			.ORG 		0
 			.DS			PRG,0xdd
@@ -170,24 +171,26 @@ TESTING		.EQU 	0			; must be zero for production version
 
 			.ORG		RAM_END
 RamEnd:
-		.ENDIF
+		#endif
 ;*******************************************************************************************
 
 		.ORG		FLASH_END			; should be section modulo erase page minus 32
 APL_VECT:
 
-PRI:    .DC.b    0,$80	; ,0,0,0,0,0,0 ; 8 bytes reserved for bootloader's private use
+PRI:    .byte    0,$80	; ,0,0,0,0,0,0 ; 8 bytes reserved for bootloader's private use
 ;*******************************************************************************************
 SCIAPIREF:
- 		.DC.w   SCIINIT         ; this address holds the Start of SCI API table
- 		.DC.w	WRITE
-	.IF WITH_RESIDENT_BUSY_LOOP > 0
- 		.DC.w	MoniRomDelayLoop
-	.ELSE
-		.DC.w	0
-	.ENDIF
-VEC0:   jmp     main            ; vector 0		; RESET ist not an interrupt
-VEC1:   jmp     main            ; vector 1
+ 		.word   SCIINIT         ; this address holds the Start of SCI API table
+ 		.word	WRITE
+	#if WITH_RESIDENT_BUSY_LOOP > 0
+ 		.word	MoniRomDelayLoop
+	#else
+		.word	0
+	#endif
+VEC0:
+	jmp     main            ; vector 0		; RESET ist not an interrupt
+VEC1:
+	jmp     main            ; vector 1
 VEC2:   jmp     main            ; vector 2
 VEC3:   jmp     main            ; vector 3
 VEC4:   jmp     main            ; vector 4
@@ -216,22 +219,22 @@ LastUserVec:
 
 		alignspace	PrivGap,32
 SCIAPI:
-        .DC.w   SCIINIT         ; address of WRITE call
-        .DC.w   READ            ; address of READ call
-        .DC.w   WRITE           ; address of WRITE call
-		.DC.w	WRITE_LOOP      ; Start address in HX, length in LEN
-		.DC.w   LEN
-	.IF WITH_RESIDENT_BUSY_LOOP > 0
-        .DC.w   MoniRomDelayLoop
-	.ENDIF
+        .word   SCIINIT         ; address of WRITE call
+        .word   READ            ; address of READ call
+        .word   WRITE           ; address of WRITE call
+		.word	WRITE_LOOP      ; Start address in HX, length in LEN
+		.word   LEN
+	#if WITH_RESIDENT_BUSY_LOOP > 0
+        .word   MoniRomDelayLoop
+	#endif
 
 		alignspace	VecGap,ERBLK_LEN
 
 ;		.DS		(ERBLK_LEN - (LastUserVec - APL_VECT)),$EE
 ; 		.ORG	FLASH_END					; must align to page erase size
-;		.IF (. - $FA00)
+;		#if (. - $FA00)
 ;			.ERROR "not aligned"
-;		.ENDIF
+;		#endif
 
 ;		.DS		(main - .),$FD
 
@@ -260,7 +263,7 @@ slfprg:
 
 ;        ldA     #[[FLASH_END+ERBLK_LEN]/256]
 ;        ldA     #[[FLASH_END+32]/256]
-;        stA     FLBPR                   ; is in RAM!!
+;        stA     FLBPR                   ; is in Flash !!
             
         bsr     SCIINIT                 ; call SCI init now :)
 
@@ -290,56 +293,12 @@ SCIINIT:
  
 ;        ldX     PRI+1                   ; [3B]
 ;        ldA     PRI                     ; [3B]
-;
 ;        pshA                            ; [1B]
 ;        pulH                            ; [1B]
 ;        stHX    ONEBIT                  ; (2B)
-;
-;    .IF RXDISIRQ = 0         ; RXDPORT & RXDPIN is defined (not IRQ)
-;        bclr    RXDPIN,RXDDDR           ; input for RXD
-;      .IF RXDPUEN = 1
-;        bset    RXDPIN,RXDPUE
-;      .ENDIF
-;    .ENDIF
-;         txdset
-;    .IF SINGLEWIRE=0
-;        bset    TXDPIN,TXDDDR           ; (2B) output for TXD
-;    .ENDIF
+
         rts
  
-;******************************************************************************************* 
-;
-;CAUGHT:            ; CAUGHT IN SELF-PROGRAMMING?
-;        jsr     SCIRXNOEDGE
-;
-;      .IF CALENABLED = 1
-;        clrH
-;        clrX
-;MONRXD2:
-;        brrxdhi         MONRXD2
-;CHKRXD:
-;        brrxdhi         BRKDONE
-;
-;      .IF RXDISIRQ = 1
-;        nop                     ; (1)
-;        nop                     ; (1)
-;      .ENDIF
-;
-;        aiX     #1              ; (2) INCREMENT THE COUNTER
-;        bra     CHKRXD          ; (3) GO BACK AND CHECK SIGNAL AGAIN
-;
-;BRKDONE:
-;        stHX    ONEBIT          ; store it
-;
-;        tXA
-;        ldX     #$1a            ; calculate speed
-;        div
-;      .ELSE
-;        ldA     #5             ; <<< modify this if no calibration is required (BUS freq in MHz * 4)
-;      .ENDIF
-;        stA     CPUSPD
-;        clr     CTRLBYT         ; no mass erase
-
 ;*******************************************************************************************
 CAUGHT:			; CAUGHT IN SELF-PROGRAMMING?
     	bsr     READ
@@ -364,9 +323,9 @@ BCKGND:
         cbeqA   ERASE__, ERASE_COM       ; Erase command
         cbeqA   WR_DATA, WR_DATA_COM   ; Write (program) command
         cbeqA   IDENT, IDENT_COM       ; Ident command
-      .IF RCS_ENA = 1
+      #if (RCS_ENA == 1)
         cbeqA   RD_DATA, RD_DATA_COM   ; Read command
-      .ENDIF
+      #endif
  
         ; if no valid command found (including Quit) 
         ; generate reset too! 
@@ -402,7 +361,7 @@ WRITE_LOOP:                     ; Start address in HX, length in LEN
         dbnz    LEN, WRITE_LOOP
         rts
 ;******************************************************************************************* 
-      .IF RCS_ENA = 1
+      #if (RCS_ENA == 1)
 RD_DATA_COM: 
  
         bsr     READ
@@ -416,7 +375,7 @@ RD_DATA_COM:
         bsr     WRITE_LOOP
  
         bra     BCKGND          ; finish without ACK
-      .ENDIF
+      #endif
 ;******************************************************************************************* 
 READ:
         brclr	5,SCS1,READ
@@ -574,7 +533,7 @@ WR_ALG_END:
 
 ; cycles = (((A-3)*3 +10)*X) + 7
 ; longest wait time 25.1 s
-		.IF WITH_RESIDENT_BUSY_LOOP > 0
+		#if (WITH_RESIDENT_BUSY_LOOP > 0)
 
 MoniRomDelayLoop:				   ; [5] ; jsr
 		decA                       ; [1] J     $fd21   4a
@@ -587,10 +546,10 @@ _Lfd25:
 		pulA                       ; [2] .     $fd27   86
 		dbnzX    _Lfd22            ; [3] ..    $fd28   5b f8
 		rts                        ; [4] .     $fd2a   81
-		.ELSE
+		#else
 
 
-		.ENDIF
+		#endif
 
 ;******************************************************************************************* 
 
@@ -604,16 +563,15 @@ ID_STRING2_END:
 ;
 ; 14 bytes
 ID_STRING1:
-        .DC.b    VER_NUM | RCS   ; version number & "Read command supported" flag
-        .DC.w    FLASH_START     ; Start ADDRESS OF FLASH
-        .DC.w    FLASH_END       ; END ADDRESS OF FLASH
-        .DC.w    APL_VECT        ; POINTER TO APPLICATION VECTOR TABLE
-        .DC.w    INT_VECT        ; POINTER TO BEGINING OF FLASH INT. VECTORS
-        .DC.w    ERBLK_LEN       ; ERASE BLCK LENGTH OF FLASH ALG.
-        .DC.w    WRBLK_LEN       ; WRITE BLCK LENGTH OF FLASH ALG.
+        .byte    VER_NUM | RCS   ; version number & "Read command supported" flag
+        .word    FLASH_START     ; Start ADDRESS OF FLASH
+        .word    FLASH_END       ; END ADDRESS OF FLASH
+        .word    APL_VECT        ; POINTER TO APPLICATION VECTOR TABLE
+        .word    INT_VECT        ; POINTER TO BEGINING OF FLASH INT. VECTORS
+        .word    ERBLK_LEN       ; ERASE BLCK LENGTH OF FLASH ALG.
+        .word    WRBLK_LEN       ; WRITE BLCK LENGTH OF FLASH ALG.
 ID_STRING1_END:
-		.DC.b	 0
-
+		.byte	 0
 
 
 		.DS		(MONITOR_START - .),$EE
@@ -648,7 +606,7 @@ ID_STRING1_END:
 	declare_vector _vect_RESET			,main
 
 
-.END
+	.end
 
 
 

@@ -5,115 +5,114 @@
 ; variant specific defines
 ;
 
-		.IFNCONST RAM_START
+		#ifndef RAM_START
 RAM_START       .EQU            $60
-		.ENDIF
+		#endif
 
-		.IFNCONST RAM_SIZE
+		#ifndef RAM_SIZE
 RAM_SIZE       .EQU             768
-		.ENDIF
+		#endif
 
-		.IFNCONST FLASH_START
+		#ifndef FLASH_START
 FLASH_START		.EQU            $8000
-		.ENDIF
+		#endif
 
-		.IFNCONST FLASH_SIZE
+		#ifndef FLASH_SIZE
 FLASH_SIZE		.EQU            32256
-		.ENDIF
+		#endif
 
-	.INCLUDE	reg68hc908mr32.asm
+	#include	"reg68hc908mr32.asm"
 
+	#include	"macros.asm"
 
-	.INCLUDE	macros.asm
-
-	.MACRO	switch_to_pll_clock
+	.macro	switch_to_pll_clock
 		clr 	PCTL
 		bset	5,PCTL	 		; switch PLL on
 		bset	7,PBWC			; automatic bandwidth
 PLL_lock_wait:
 		brclr	6,PBWC,PLL_lock_wait
 		bset	4,PCTL			; select PLL clock as system
-	.ENDM
+	.endm
 
 
 ; ROM specific routines
 WriteSerial		.EQU		0xFEC3
 
-;	.MACRO	d_ms
+;	.macro	d_ms
 ;  			ldA	{1}		  		; [2] ||
 ;_L2_{2}:	clrX		  		; [1] ||
 ;_L1_{2}:
 ;			dbnzX	_L1_{2}		; [3] |    256*3 = 768T
 ;  			dbnzA	_L2_{2}		; [3] || (768+3)*(arg-1) + 2 T
-;  	.ENDM
+;  	.endm
 
-;	.MACRO d_us
+;	.macro d_us
 ;  			ldA	{1}				; [2]
 ;_L1_{2}:
 ;  			dbnzA	_L1_{2}		; [3] 3*(arg-1) + 2 T
-;  	.ENDM
+;  	.endm
 
-	.MACRO	fw_delay
+	.macro	fw_delay
 		ldX		#{1}					;[2]
 		ldA		#{2}					;[2]
 		jsr		MoniRomDelayLoop		;[5]		// TODO: find this in the monitor code
-	.ENDM
+	.endm
 
-	.MACRO	declare_delay
+	.macro	declare_delay
 Delay{1}:
 		fw_delay {2},{3}
 		rts								;[4]
-	.ENDM
+	.endm
 
 ;	; macro-names MUST be all lowercase
-;	.MACRO	fw_flash_erase_proc
+;	.macro	fw_flash_erase_proc
 ;		store_reg	fwCtrlByte,#$40
 ;		store_reg	fwCpuSpeed,#(4*F_CPU)
 ;		ldHX		#FLASH_START
 ;		jsr			FlashErase
-;	.ENDM
+;	.endm
 
-;		.MACRO	delay100us
+;		.macro	delay100us
 ;			fw_delay	1,64		; ((((64-3)*3 +10)*1)+7) := 100 µs
-;		.ENDM
+;		.endm
 
 ;	.IF (F_CPU > 1900000)
-;		.MACRO	delay100us
+;		.macro	delay100us
 ;			fw_delay	1,64		; ((((64-3)*3 +10)*1)+7) := 100 µs
-;		.ENDM
-;	.ELSE
-;	.ENDIF
+;		.endm
+;	#else
+;	#endif
 ;
 
 ; ((((4-3)*3 +10)*1)+7) := 20 ticks @ 2MHz := 10 µs
-;	.MACRO	delay10us
+;	.macro	delay10us
 ;		ldx		#1						;[2]
 ;		lda		#4						;[2]
 ;		jsr		MoniRomDelayLoop		;[5]
-;	.ENDM
+;	.endm
 
 ; ((((222-3)*3 +10)*6)+7) := 4.002 ms
-;	.MACRO	delay4ms
+;	.macro	delay4ms
 ;		ldx		#7
 ;		lda		#242
 ;		jsr		MoniRomDelayLoop
-;	.ENDM
+;	.endm
 ;
-;	.ELSE
+;	#else
 ;
-;	.MACRO	delay10us
+;	.macro	delay10us
 ;		bsr		Delay10us
-;	.ENDM
+;	.endm
 
-;	.MACRO	delay100us
+;	.macro	delay100us
 ;		bsr		Delay100us
-;	.ENDM
+;	.endm
 
-;	.MACRO	delay4ms
+;	.macro	delay4ms
 ;		bsr		Delay4ms
-;	.ENDM
+;	.endm
 ;
 ;
-;	.ENDIF
+;	#endif
 
 

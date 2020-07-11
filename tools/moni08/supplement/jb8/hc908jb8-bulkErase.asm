@@ -3,12 +3,8 @@
 ;   small program to load into RAM and delete the flash eeprom
 ;
 ;
-;	.TRACE
 
-
-	.INCLUDE	board.asm
-	.INCLUDE	macros.asm
-	.INCLUDE	fancy_macros.asm
+	#include	"board.asm"
 
 	.ORG		RAM_START
 
@@ -55,6 +51,6 @@ ReadyLoop:						; [247]
 
 	.ORG		$FE
 StackPointer:
-	.DC.w		MainStart
+	.word		MainStart
 
 

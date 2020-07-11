@@ -7,17 +7,13 @@
 
 USE_PLL_CLOCK 	.EQU	1	; 7.37MHz  Yesss
 
-	.INCLUDE	board.asm
-	.INCLUDE	macros.asm
-	.INCLUDE	fancy_macros.asm
+	#include	"board.asm"
 
-
-next_var	.SET	0x80
+next_var	.set	0x80
 
 	declare_var		delayWait,2
 	declare_var		portStrLen,1
 	declare_var		portStr,40
-
 
 
 ; EQU and Labels _must_ start @ begin of line
@@ -26,22 +22,21 @@ TIMER_WRAPS			.EQU	RAM_START
 PIN_FLAGS			.EQU	RAM_START+1
 ;_led_enable_mask	.EQU	(PTB6 | PTB7)
 
-	.IFNCONST	START
+	#ifndef		START
 START			.EQU	FLASH_START
-	.ENDIF
+	#endif
 
 TARGET_IS_RAM	.EQU	(START < [RAM_START+RAM_SIZE])
 
-	.IF TARGET_IS_RAM
+	#if TARGET_IS_RAM
 		.ORG	RAM_START
-		.DC.w	0
+		.word	0
 
-;		.ORG	(RAM_START - RAM_SIZE -2)
 		.ORG	$FE
-		.DC.w	MainEntry
-	.ELSE
-		.ORG 	FLASH_START
-	.ENDIF
+		.word	MainEntry
+	#else
+		.ORG	FLASH_START
+	#endif
 
 
 MakePortHexNum:			; X must point to string end in RAM variable, A has value to be converted
@@ -108,7 +103,7 @@ WritePorts:
 	ldA		#0x1C
 	bsr		MakePortHexNum
 
-	.IF 1
+	#if 1
 
 	ldX		#PTA
 	ldA		#4
@@ -121,7 +116,7 @@ PortReadE:
 	bsr		ReadPort
 	dbnzA	PortReadE
 
-	.ENDIF
+	#endif
 
 	; linefeed
 	ldX		portStrLen
@@ -140,6 +135,8 @@ WordDelay:			; max 26.4ms @ 7.3 MHz
 	dbnzX	WordDelay			;
 	rts
 
+
+
 MainEntry:
 	ldA		#0xFF
 	stA		COPCTL
@@ -152,17 +149,17 @@ MainEntry:
 	clrH
 	stHX	delayWait
 
-	.IF USE_PLL_CLOCK > 0
-		.ECHO "with higher CPU clock"
+	#if USE_PLL_CLOCK > 0
+		.echo "with higher CPU clock"
 		; PLL clock test
 ;		 PPG := 0x66 after reset is what we want, 4.915 *6 / 4 := 7.3725 MHz
 		switch_to_pll_clock
-	.ENDIF
+	#endif
 
 	jsr		SciInit
 
-	.IF				TARGET_IS_RAM
-	.ELSE
+	#if				TARGET_IS_RAM
+	#else
 
 	store_reg		CONFIG,#COPD	; COP disabled, COPRS long rate, LVID disabled
 
@@ -190,11 +187,11 @@ MainEntry:
 
 	store_reg		DDRF,#[[1<<0] | [1 << 2]]		; pins output
 
-	.ELSE
+	#else
 
 	mov			#[1<<4],DDRC
 
-	.ENDIF
+	#endif
 
 
 
@@ -202,12 +199,12 @@ MainEntry:
 	clrH
 
 MainLoop:
-	.IF		TARGET_IS_RAM
+	#if	TARGET_IS_RAM
 		shake_pin	4,PTC,LED
-	.ELSE
+	#else
 ;	stA		COPCTL
 		shake_pin	0,PTF,LED
-	.ENDIF
+	#endif
 
 	;ldHX	delayWait
 ;	pshH
@@ -227,8 +224,8 @@ MainLoop:
 
 	bra MainLoop
 
-	.IF		TARGET_IS_RAM
-	.ELSE
+	#if		TARGET_IS_RAM
+	#else
 
 TimerOvfIRQ:
 	bclr		7,TBSC			; clear interrupt flag
@@ -278,9 +275,9 @@ ExtnIRQ:
 	declare_vector _vect_SWI		, 	 DummyIRQ
 	declare_vector _vect_RESET		, MainEntry
 
-	.ENDIF
+	#endif
 
 
 
-
+; #endif
 

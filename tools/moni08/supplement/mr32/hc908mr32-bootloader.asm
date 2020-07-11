@@ -3,12 +3,8 @@
 ;   small program to load into RAM and delete the flash eeprom
 ;
 ;
-	.TRACE
 
-
-	.INCLUDE	board.asm
-	.INCLUDE	macros.asm
-	.INCLUDE	fancy_macros.asm
+	#include	"board.asm"
 
 
 fwCtrlByte		.EQU		0x68
@@ -25,16 +21,16 @@ _ldProgStart	.EQU	  RAM_START + $06
 	.DS		(_ldProgStart - .),0
 
 	.ORG	_ldProgStart
-	.DC.w	FLASH_START
+	.word	FLASH_START
 
 	.ORG	fwCtrlByte
-	.DC.b	0
+	.byte	0
 
 	.ORG	fwCpuSpeed
-	.DC.b	5
+	.byte	5
 
 	.ORG	fwLastAddr
-	.DC.w	(FLASH_START+64)
+	.word	(FLASH_START+64)
 
 	.ORG	fwDataBlock
 	.DS		64,$FF
@@ -42,13 +38,13 @@ _ldProgStart	.EQU	  RAM_START + $06
 ;	.ORG	$D0
 
 STACK_CPY:
-	.DC.w
+	.word
 ADRS:
-	.DC.w	FLASH_START
+	.word	FLASH_START
 LEN:
-	.DC.b 	0
+	.byte 	0
 POM:
-	.DC.b	0
+	.byte	0
 
 ;	declare_delay 100us,1,80			; 248 cycles,
 ;	declare_delay 4ms,13,252			; 9848 cycles, 4.007 ms
@@ -75,14 +71,14 @@ tellResult:
 	bra		MainLoop		; in case the monitor want us to run again
 
 
-	.INCLUDE monitor-excerpts.asm
+	#include "monitor-excerpts.asm"
 
 	declare_delay 4ms,7,234				; 4928 cycles,
 	declare_delay 100us,1,40				; 128 cycles,
 
 	.ORG	$FE
 StackPointer:
-	.DC.w	MainStart
+	.word	MainStart
 
 ;**************************************************************
 FlashErase:
@@ -141,19 +137,19 @@ T10MS	  	.EQU		17
 T100MS_      .EQU     	255
 
  ;*******************************************************************************************
-		.MACRO	d_ms
+		.macro	d_ms
   			ldA	{1}		  		; [2] ||
 _L2_{2}:	clrX		  		; [1] ||
 _L1_{2}:
 			dbnzX	_L1_{2}		; [3] |    256*3 = 768T
   			dbnzA	_L2_{2}		; [3] || (768+3)*(arg-1) + 2 T
-  		.ENDM
+  		.endm
 
-		.MACRO d_us
+		.macro d_us
   			ldA	{1}				; [2]
 _L1_{2}:
   			dbnzA	_L1_{2}		; [3] 3*(arg-1) + 2 T
-  		.ENDM
+  		.endm
 
 ;*******************************************************************************************
 FlashProg:

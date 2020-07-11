@@ -1,7 +1,13 @@
 CPU_VARIANT = hc908jk3
 
-RAM_START = 0x80
-RAM_SIZE = 128
+# without hc08sprg bootloader
+NATIVE_RAM_START = 0x80
+NATIVE_RAM_SIZE = 128
+
+# with bootloader
+RAM_START = 0x88
+RAM_SIZE = 120
+
 STACK_LOC = 0xFF
 # STACKSIZE = 40
 

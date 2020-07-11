@@ -5,21 +5,21 @@
 ; variant specific defines
 ;
 
-		.IFNCONST RAM_START
+		#ifndef RAM_START
 RAM_START       .EQU            $40
-		.ENDIF
-		.IFNCONST RAM_SIZE
+		#endif
+		#ifndef RAM_SIZE
 RAM_SIZE       .EQU             256
-		.ENDIF
+		#endif
 
-		.IFNCONST FLASH_START
+		#ifndef FLASH_START
 FLASH_START		.EQU            $DC00
-		.ENDIF
-		.IFNCONST FLASH_SIZE
+		#endif
+		#ifndef FLASH_SIZE
 FLASH_SIZE		.EQU            8192
-		.ENDIF
+		#endif
 
-	.INCLUDE	reg68hc908jb8.asm
+	#include	reg68hc908jb8.asm
 
 
 
@@ -64,45 +64,45 @@ fwLastAddr      .EQU      RAM_START + $0A
 fwDataBlock     .EQU      RAM_START + $0C
 
 
-	.INCLUDE	macros.asm
+	#include	macros.asm
 
-	.MACRO	fw_delay
+	.macro	fw_delay
 		ldX		#{1}					;[2]
 		ldA		#{2}					;[2]
 		jsr		MoniRomDelayLoop		;[5]
-	.ENDM
+	.endm
 
-	.MACRO	declare_delay
+	.macro	declare_delay
 Delay{1}:
 		fw_delay {2},{3}
 		rts								;[4]
-	.ENDM
+	.endm
 
 	; macro-names MUST be all lowercase
-	.MACRO	fw_flash_erase_proc
+	.macro	fw_flash_erase_proc
 		store_reg	fwCtrlByte,#$40
 		store_reg	fwCpuSpeed,#(4*F_CPU)
 		ldHX		#FLASH_START
 		jsr			FlashErase
-	.ENDM
+	.endm
 
-	.MACRO	delay5us
+	.macro	delay5us
 		fw_delay	1,3			; ((((3-3)*3 +10)*1)+7) := 17 cycles  ~5.6 µs @ 3MHz
-	.ENDM
+	.endm
 
-	.MACRO	delay10us
+	.macro	delay10us
 		fw_delay	1,8			; ((((8-3)*3 +10)*1)+7) := 32 cycles  ~10µs @ 3MHz
-	.ENDM
+	.endm
 
-	.MACRO	delay100us
+	.macro	delay100us
 		fw_delay	1,98		; ((((98-3)*3 +10)*1)+7) := 302 cycles  100µs @ 3MHz
-	.ENDM
+	.endm
 
-	.MACRO	delay2ms
+	.macro	delay2ms
 		fw_delay	8,250		; ((((250-3)*3 +10)*1)+7) := 6015 cycles  2ms @ 3MHz
-	.ENDM
+	.endm
 
-	.MACRO	delay4ms
+	.macro	delay4ms
 		fw_delay	16,250		; ((((250-3)*3 +10)*16)+7) := 12023 cycles should make 4ms @ 3MHz
-	.ENDM
+	.endm
 

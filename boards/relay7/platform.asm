@@ -8,13 +8,13 @@
 			.PROCESSOR		68908
 
 
-		.INCLUDE	macros.asm
+		#include	"macros.asm"
 
-		.INCLUDE	reg68hc908jk3.asm
+		#include	"reg68hc908jk3.asm"
 
-		.MACRO idents_
-                .DC.b     "JK3",0    	; soft SCI
-        .ENDM
+		.macro idents_
+                .byte     "JK3",0    	; soft SCI
+        .endm
 
 ; J2_P8  / PB1  ist  TxD
 ; J2_P10 / PB0  ist  RxD
@@ -25,22 +25,22 @@ SCITXINV        .EQU     0             ; (1 if SCI TX is inverted (no drivers))
 SCIRXINV        .EQU     SCITXINV      ; (1 if SCI RX is inverted (no drivers))
 RXDISIRQ        .EQU     0             ; (if RXD uses IRQ pin instead)
 
-              .IF RXDISIRQ = 0         ; RXDPORT & RXDPIN is defined
+			#if (RXDISIRQ == 0)         ; RXDPORT & RXDPIN is defined
 RXDPORT         .EQU     PTB           ; <<<
 RXDPIN          .EQU     0             ; <<<
 RXDPUEN         .EQU     1             ; use pull-up feature
-			.ELSE
+			#else
 RXDPUEN         .EQU     0             ; undefine pull-up enabling port
-              .ENDIF
+			#endif
 
 BUSCLOCK        .EQU     1003422       ; <<< MODIFY SO IT IS NEAR YOUR BUS CLOCK!
 SCISPEED        .EQU     9600
 
 CALENABLED      .EQU     1             ; calibration enabled
 
-              .IF CALENABLED = 0
+			#if (CALENABLED == 0)
 SPEED           .EQU     4             ; specify Xtal clk in MHz if no calibration (known freq.)
-              .ENDIF
+			#endif
 
 CONFIG1					.EQU		CONFIG
 
@@ -59,7 +59,7 @@ FLBPRMASK       		.EQU     	$E000       ; this is CPU specific FLBPR mask (i.e. 
 
 
 ;
-;		.MACRO	dbnz
+;		.macro	dbnz
 ;				.DC.b		$3B,{1},(. - {2})
-;		.ENDM
+;		.endm
 ;

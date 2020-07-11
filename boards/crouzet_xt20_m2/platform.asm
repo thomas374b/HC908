@@ -12,11 +12,11 @@
 USE_PLL_CLOCK		.EQU		0
 START			.EQU		FLASH_END
 
-		.INCLUDE	board.asm
+		#include	"board.asm"
 
-		.MACRO idents_
-                .DC.b     "MR32",0    	; soft SCI
-        .ENDM
+		.macro idents_
+                .byte	  "MR32",0    	; soft SCI
+        .endm
 
 ; J2_P8  / PB1  ist  TxD
 ; J2_P10 / PB0  ist  RxD
@@ -33,7 +33,7 @@ START			.EQU		FLASH_END
 ;_RXDPUEN         .EQU     1             ; use pull-up feature
 ;			.ELSE
 ;_RXDPUEN         .EQU     0             ; undefine pull-up enabling port
-;              .ENDIF
+;              #endif
 
 BUSCLOCK        .EQU     F_CPU        ; <<< MODIFY SO IT IS NEAR YOUR BUS CLOCK!
 SCISPEED        .EQU     115200
@@ -42,17 +42,17 @@ SCISPEED        .EQU     115200
 
 ;              .IF CALENABLED = 0
 ; SPEED           .EQU     5			;4.915             ; specify Xtal clk in MHz if no calibration (known freq.)
-;              .ENDIF
+;              #endif
 
 CONFIG1			.EQU		CONFIG
 
-	.IFNCONST RAM_START
+	#ifndef RAM_START
 RAM_START        	.EQU    	$60
-	.ENDIF
+	#endif
     
-	.IFNCONST RAM_SIZE
+	#ifndef RAM_SIZE
 RAM_SIZE		.EQU		768
-	.ENDIF
+	#endif
 
 FLASH_START		.EQU	    $8000       ; flash Start for Jx3
 
@@ -61,9 +61,9 @@ ROM_START     		.EQU    	$FE10	; Monitor
 LOWEST_VECTOR_ADDR   	.EQU		$FFD2
 
 ;  TODO: calculate bootloader size, subtract from highest flash address
-;	.IFNCONST FLASH_END
+;	#ifndef FLASH_END
 ;FLASH_END		.EQU	 	$FA00       ; this is APL_VECT address (also from PRM file)
-;	.ENDIF
+;	#endif
 
 FLBPRMASK       	.EQU     	$8000       ; this is CPU specific FLBPR mask (i.e. bits that are always in the address)
 

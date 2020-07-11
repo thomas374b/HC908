@@ -3,12 +3,8 @@
 ;   small program to load into RAM and delete the flash eeprom
 ;
 ;
-;	.TRACE
 
-
-	.INCLUDE	board.asm
-	.INCLUDE	macros.asm
-	.INCLUDE	fancy_macros.asm
+	#include	"board.asm"
 
 	.ORG		RAM_START
 
@@ -18,7 +14,7 @@
 ;	declare_delay 4ms,13,252			; 9848 cycles, 4.007 ms
 	declare_delay 4ms,7,234				; 4928 cycles,
 
-	.INCLUDE monitor-excerpts.asm
+	#include monitor-excerpts.asm
 
 MainStart:
 ;	store_reg	FLBPR, #$FF		; disable flash protection
@@ -82,7 +78,7 @@ _shortDelay:
 
 	.ORG		$FE
 StackPointer:
-	.DC.w		MainStart
+	.word		MainStart
 
 
 

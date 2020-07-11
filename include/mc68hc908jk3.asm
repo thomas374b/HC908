@@ -5,21 +5,21 @@
 ; variant specific defines
 ;
 
-		.IFNCONST RAM_START
+		#ifndef RAM_START
 RAM_START       .EQU            $80
-		.ENDIF
-		.IFNCONST RAM_SIZE
+		#endif
+		#ifndef RAM_SIZE
 RAM_SIZE       .EQU             128
-		.ENDIF
+		#endif
 
-		.IFNCONST FLASH_START
+		#ifndef FLASH_START
 FLASH_START		.EQU            $EC00
-		.ENDIF
-		.IFNCONST FLASH_SIZE
+		#endif
+		#ifndef FLASH_SIZE
 FLASH_SIZE		.EQU            4096
-		.ENDIF
+		#endif
 
-	.INCLUDE	reg68hc908jk3.asm
+	#include	"reg68hc908jk3.asm"
 ;
 ;  Register Section Bits FLCR
 ;
@@ -54,69 +54,70 @@ fwLastAddr      .EQU      RAM_START + $0A
 fwDataBlock     .EQU      RAM_START + $0C
 
 
-	.INCLUDE	macros.asm
+	#include	"macros.asm"
 
-	.MACRO	fw_delay
+	.macro	fw_delay
 		ldX		#{1}					;[2]
 		ldA		#{2}					;[2]
 		jsr		MoniRomDelayLoop		;[5]
-	.ENDM
+	.endm
 
-	.MACRO	declare_delay
+	.macro	declare_delay
 Delay{1}:
 		fw_delay {2},{3}
 		rts								;[4]
-	.ENDM
+	.endm
 
 	; macro-names MUST be all lowercase
-	.MACRO	fw_flash_erase_proc
+	.macro	fw_flash_erase_proc
 		store_reg	fwCtrlByte,#$40
 		store_reg	fwCpuSpeed,#(4*F_CPU)
 		ldHX		#FLASH_START
 		jsr			FlashErase
-	.ENDM
+	.endm
 
-		.MACRO	delay100us
-			fw_delay	1,64		; ((((64-3)*3 +10)*1)+7) := 100 탎
-		.ENDM
+	.macro	delay100us
+		fw_delay	1,64		; ((((64-3)*3 +10)*1)+7) := 100 탎
+	.endm
 
 ;	.IF (F_CPU > 1900000)
-;		.MACRO	delay100us
+;		.macro	delay100us
 ;			fw_delay	1,64		; ((((64-3)*3 +10)*1)+7) := 100 탎
-;		.ENDM
+;		.endm
 ;	.ELSE
-;	.ENDIF
+;	#endif
 ;
 
 ; ((((4-3)*3 +10)*1)+7) := 20 ticks @ 2MHz := 10 탎
-;	.MACRO	delay10us
+;	.macro	delay10us
 ;		ldx		#1						;[2]
 ;		lda		#4						;[2]
 ;		jsr		MoniRomDelayLoop		;[5]
-;	.ENDM
+;	.endm
 
 ; ((((222-3)*3 +10)*6)+7) := 4.002 ms
-;	.MACRO	delay4ms
+;	.macro	delay4ms
 ;		ldx		#7
 ;		lda		#242
 ;		jsr		MoniRomDelayLoop
-;	.ENDM
+;	.endm
 ;
 ;	.ELSE
 ;
-;	.MACRO	delay10us
+;	.macro	delay10us
 ;		bsr		Delay10us
-;	.ENDM
+;	.endm
 
-;	.MACRO	delay100us
+;
+;	.macro	delay100us
 ;		bsr		Delay100us
-;	.ENDM
-
-;	.MACRO	delay4ms
+;	.endm
+;
+;	.macro	delay4ms
 ;		bsr		Delay4ms
-;	.ENDM
+;	.endm
 ;
 ;
-;	.ENDIF
+;	#endif
 
 

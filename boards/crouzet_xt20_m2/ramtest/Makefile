@@ -27,14 +27,16 @@ DEPEND = board.asm $(GENERICS)
 
 TARGET = fastblink
 
+DASM_OPTS = -f3 -E2 -S -T1 -v4 
+
 all: $(TARGET)-final.s19
 
 $(TARGET).bin: $(TARGET).asm $(DEPEND) Makefile mklinks.mk
 	@echo dasm $(TARGET).asm \-\> $@
-	@dasm $(TARGET).asm -v3 -f3 -o$(TARGET).bin -l$(TARGET).lst $(DEFINES)
+	dasm $(TARGET).asm $(DASM_OPTS) -o$(TARGET).bin -s$(TARGET).sym -l$(TARGET).lst $(DEFINES)
 
 clean:
-	rm -f *.bin *.s19
+	rm -f *.bin *.s19 *.sym
 
 distclean: clean
 	rm -f *.lst flash.mk $(GENERICS) .moni08rc moni08.mk board.asm

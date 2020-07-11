@@ -1,16 +1,16 @@
 
 
-		.INCLUDE        mc68hc908jb8.asm
+		#include        "mc68hc908jb8.asm"
 
-		.IF	(START == RAM_START)
+		#if	(START < [RAM_START+RAM_SIZE])
 ; probably running rom RAM in monitor mode
 F_CPU	.EQU	3000000
 
-		.ELSE
+		#else
 
 ; running from FLASH in user mode
 F_CPU	.EQU	3000000
-		.ENDIF
+		#endif
 
 
 LED0	.EQU	PTD0

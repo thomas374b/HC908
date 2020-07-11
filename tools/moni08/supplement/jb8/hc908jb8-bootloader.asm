@@ -3,13 +3,8 @@
 ;   small program to load into RAM and delete the flash eeprom
 ;
 ;
-	.TRACE
 
-
-	.INCLUDE	board.asm
-	.INCLUDE	macros.asm
-	.INCLUDE	fancy_macros.asm
-
+	#include	"board.asm"
 
 ; _ldLastAddr		.EQU	  RAM_START + $04
 _ldProgStart	.EQU	  RAM_START + $06
@@ -18,20 +13,20 @@ _ldProgStart	.EQU	  RAM_START + $06
 	.DS		6,$DC
 
 ;	.ORG	_ldLastAddr
-;	.DC.w	$ECFF
+;	.word	$ECFF
 
 	.ORG	_ldProgStart
-	.DC.w	FLASH_START
+	.word	FLASH_START
 
 	.ORG	fwCtrlByte
-;	.DC.b	(1 << 6)		; mass erase
-	.DC.b	0
+;	.byte	(1 << 6)		; mass erase
+	.byte	0
 
 	.ORG	fwCpuSpeed
-	.DC.b	8
+	.byte	8
 
 	.ORG	fwLastAddr
-	.DC.w	(FLASH_START+64)
+	.word	(FLASH_START+64)
 
 	.ORG	fwDataBlock
 	.DS		64,$FF
@@ -60,6 +55,6 @@ tellResult:
 
 	.ORG	$FE
 StackPointer:
-	.DC.w	MainStart
+	.word	MainStart
 
 

@@ -1,0 +1,1026 @@
+diff --git dasm-vanilla/src/Makefile dasm/src/Makefile
+index a8a6c82..cfbb47e 100644
+--- dasm-vanilla/src/Makefile
++++ dasm/src/Makefile
+@@ -28,6 +28,9 @@
+ 
+ #GOPTI= -O -m32 # -O for more warnings; use -O0 for debugging, use -O3 for speed
+ 
++# GOPTI = -O3 -mcpu=686
++GOPTI = -ggdb3
++
+ GWARN= -ansi -std=c99 -pedantic -Wall \
+        -Wstrict-prototypes -Wdeclaration-after-statement \
+        -Wold-style-definition -Wmissing-declarations -Wmissing-prototypes \
+@@ -35,6 +38,7 @@ GWARN= -ansi -std=c99 -pedantic -Wall \
+        -Wcast-align -Wpointer-arith -Wbad-function-cast \
+        -Wformat-y2k -Wformat-nonliteral -Wformat-security \
+        -Wfloat-equal -Wundef -Winline \
++
+        # -Wfour-char-constants # Apple OS X only option, not needed anyway?
+        # -Wunused # definition is weird in man gcc, effect is weird too
+        # -Wextra -Wno-unused-parameter # no-unused tames extra a little
+@@ -44,15 +48,16 @@ GWARN= -ansi -std=c99 -pedantic -Wall \
+ 
+ #GDEBG= -g # -fprofile-arcs -ftest-coverage -pg # -D_FORTIFY_SOURCE=2
+ 
+-#CFLAGS= $(GOPTI) $(GWARN) $(GDEBG)
++CFLAGS= $(GOPTI) $(GWARN) $(GDEBG)
+ #LDFLAGS= -m32 -L/usr/lib32
+ 
+ #CC= gcc
+ 
+ OBJS= main.o ops.o globals.o exp.o symbols.o \
+-      mne6303.o mne6502.o mne68705.o mne6811.o mnef8.o
++      mne6303.o mne6502.o mne68705.o mne6811.o mnef8.o mne68908.o
++
+ SRCS= main.c ops.c globals.c exp.c symbols.c \
+-      mne6303.c mne6502.c mne68705.c mne6811.c mnef8.c
++      mne6303.c mne6502.c mne68705.c mne6811.c mnef8.c mne68908.c
+ 
+ ALL= dasm ftohex
+ 
+diff --git dasm-vanilla/src/asm.h dasm/src/asm.h
+index 3d111de..492f52c 100644
+--- dasm-vanilla/src/asm.h
++++ dasm/src/asm.h
+@@ -32,6 +32,10 @@
+ #include <stdlib.h>
+ #include <stdbool.h>
+ 
++
++#define		WITH_STRICT_CAMELCASE_CHECKING		1
++#define		WITH_EXTENDED_HASH_SIZE			1
++
+ /* for -T option [phf] */
+ typedef enum
+ {
+@@ -156,10 +160,19 @@ enum FORMAT
+ #define STRLIST     struct _STRLIST
+ 
+ #define DEFORGFILL  255
+-#define SHASHSIZE   1024
+-#define MHASHSIZE   1024
+-#define SHASHAND    0x03FF
+-#define MHASHAND    0x03FF
++
++#ifdef WITH_EXTENDED_HASH_SIZE
++    #define	HASH_LEN_BITS	12	// hashtable size increased by factor 4, 2020-07-10
++#else
++    #define	HASH_LEN_BITS	10	// original implementation
++#endif
++
++#define SHASHSIZE   (1 << HASH_LEN_BITS)
++#define MHASHSIZE   (1 << HASH_LEN_BITS)
++
++#define SHASHAND    (SHASHSIZE-1)
++#define MHASHAND    (MHASHSIZE-1)
++
+ #define ALLOCSIZE   16384
+ #define MAXMACLEVEL 32
+ #define TAB        9
+@@ -170,19 +183,25 @@ enum FORMAT
+ 		AM_IMM8,				/*    immediate 8  bits   */
+ 		AM_IMM16,		        /*    immediate 16 bits   */
+ 		AM_BYTEADR,				/*    address 8 bits        */
+-		AM_BYTEADRX,			/*    address 16 bits     */
+-		AM_BYTEADRY,			/*    relative 8 bits     */
+-		AM_WORDADR,				/*    index x 0 bits        */
+-		AM_WORDADRX,			/*    index x 8 bits        */
+-		AM_WORDADRY,			/*    index x 16 bits     */
+-		AM_REL,					/*    bit inst. special   */
+-		AM_INDBYTEX,			/*    bit-bra inst. spec. */
+-		AM_INDBYTEY,			/*    index y 0 bits        */
+-		AM_INDWORD,				/*    index y 8 bits        */
++
++		AM_BYTEADRX,			/*    address 16 bits     */		// !misleading comment
++		AM_BYTEADRY,			/*    relative 8 bits     */		// !misleading comment
++		AM_WORDADR,				/*    index x 0 bits        */	// !misleading comment
++		AM_WORDADRX,			/*    index x 8 bits        */		// !misleading comment
++		AM_WORDADRY,			/*    index x 16 bits     */		// !misleading comment
++		AM_REL,					/*    bit inst. special   */	// !misleading comment
++		AM_INDBYTEX,			/*    bit-bra inst. spec. */		// !misleading comment
++		AM_INDBYTEY,			/*    index y 0 bits        */		// !misleading comment
++		AM_INDWORD,				/*    index y 8 bits        */	// !misleading comment
++
+ 		AM_0X,					/*    index x 0 bits        */
+ 		AM_0Y,					/*    index y 0 bits        */
+-		AM_BITMOD,				/*    ind addr 8 bits     */
+-		AM_BITBRAMOD,			/*    ind addr 16 bits    */
++
++		AM_BITMOD,				/*    ind addr 8 bits     */	// !misleading comment
++		AM_BITBRAMOD,			/*    ind addr 16 bits    */		// !misleading comment
++
++		AM_BYTEADR_SP,				/*    index SP +8 bits     */
++		AM_WORDADR_SP,				/*    index SP +16 bits   */
+ 
+ 		AM_SYMBOL,
+ 		AM_EXPLIST,
+@@ -209,6 +228,9 @@ enum FORMAT
+ #define AF_0Y					( 1L << AM_0Y )
+ #define AF_BITMOD				( 1L << AM_BITMOD )
+ #define AF_BITBRAMOD			( 1L << AM_BITBRAMOD )
++#define AF_BYTEADR_SP				( 1L << AM_BYTEADR_SP)
++#define AF_WORDADR_SP				( 1L << AM_WORDADR_SP)
++
+ 
+ #define AM_BYTE					AM_BYTEADR
+ #define AM_WORD					AM_WORDADR
+diff --git dasm-vanilla/src/exp.c dasm/src/exp.c
+index a86899b..9d9cf1c 100644
+--- dasm-vanilla/src/exp.c
++++ dasm/src/exp.c
+@@ -104,6 +104,7 @@ int IsAlphaNum( int c );
+ *    val	zero page or absolute
+ *    val,x	zero,x or absolute,x
+ *    val,y	zero,y or absolute,y
++*    val,sp	zero,sp
+ *    (val)	indirect
+ *    (val,x)	zero indirect x
+ *    (val),y	zero indirect y
+@@ -458,6 +459,15 @@ SYMBOL *eval(const char *str, int wantmode)
+                 if(Mnext==AM_INDWORD)
+                      Mnext=AM_0Y;
+             }
++            else if (scr == 's' && ((str[2]|0x20) == 'p') && !IsAlphaNum(str[3]))	// stack pointer indexed address mode
++            {
++                cur->addrmode = AM_BYTEADR_SP;
++                ++str;
++                ++str;
++
++                if (Mnext==AM_WORDADR)
++                     Mnext=AM_WORDADR_SP;
++            }
+             else
+             {
+                 SYMBOL *pNewSymbol = allocsymbol();
+@@ -505,8 +515,15 @@ SYMBOL *eval(const char *str, int wantmode)
+                 }
+             }
+ 
+-            if (*str == '0')
++            if (*str == '0') 
++            {
++                if (str[1] == 'x') {			// allow also '0xAA' notation for '$AA'
++                    ++str;
++                    str = (char *)pushhex(str+1);
++                } else {
+                 str = pushoct(str);
++                }
++            }
+             else
+             {
+                 if (*str > '0' && *str <= '9')
+@@ -908,6 +925,7 @@ const char *pushsymbol(const char *str)
+     for (ptr = str;
+     *ptr == '_' ||
+         *ptr == '.' ||
++        *ptr == '@' ||				// allow at-sign to apear in label names
+         (*ptr >= 'a' && *ptr <= 'z') ||
+         (*ptr >= 'A' && *ptr <= 'Z') ||
+         (*ptr >= '0' && *ptr <= '9');
+diff --git dasm-vanilla/src/globals.c dasm/src/globals.c
+index c3f4979..aab37cd 100644
+--- dasm-vanilla/src/globals.c
++++ dasm/src/globals.c
+@@ -82,8 +82,8 @@ unsigned char	 Fisclear;
+ unsigned long	 Plab, Pflags;
+ 
+ /*unsigned int	Adrbytes[]  = { 1, 2, 3, 2, 2, 2, 3, 3, 3, 2, 2, 2, 3, 1, 1, 2, 3 };*/
+-unsigned int	Cvt[]	    = { 0, 2, 0, 6, 7, 8, 9, 0, 0, 0, 0, 0, 0, 4, 5, 0, 0 };
+-unsigned int	Opsize[]    = { 0, 1, 2, 1, 1, 1, 2, 2, 2, 2, 1, 1, 2, 0, 0, 1, 1 };
++unsigned int	Cvt[]	    = { 0, 2, 0, 6, 7, 8, 9, 0, 0, 0, 0, 0, 0, 4, 5, 0, 0, 0, 0 };	// new stack pointer indexed address mode added 2020-07-11
++unsigned int	Opsize[]    = { 0, 1, 2, 1, 1, 1, 2, 2, 2, 2, 1, 1, 2, 0, 0, 1, 1, 1, 2 };
+ 
+ MNEMONIC Ops[] = {
+     { NULL, v_list    , "list",           0,      0, {0,} },
+@@ -94,6 +94,7 @@ MNEMONIC Ops[] = {
+     { NULL, v_dc      , "dc",             0,      0, {0,} },
+     { NULL, v_dc      , "byte",           0,      0, {0,} },
+     { NULL, v_dc      , "word",           0,      0, {0,} },
++    { NULL, v_dc      , "short",          0,      0, {0,} },
+     { NULL, v_dc      , "long",           0,      0, {0,} },
+     { NULL, v_ds      , "ds",             0,      0, {0,} },
+     { NULL, v_dc      , "dv",             0,      0, {0,} },
+@@ -110,10 +111,12 @@ MNEMONIC Ops[] = {
+     { NULL, v_set     , "set",            0,      0, {0,} },
+     { NULL, v_setstr  , "setstr",         0,      0, {0,} },
+     { NULL, v_macro   , "mac",            MF_IF,  0, {0,} },
++    { NULL, v_macro   , "macro",          MF_IF,  0, {0,} },
+     { NULL, v_endm    , "endm",           MF_ENDM,0, {0,} },
+     { NULL, v_mexit   , "mexit",          0,      0, {0,} },
+     { NULL, v_ifconst , "ifconst",        MF_IF,  0, {0,} },
+     { NULL, v_ifnconst, "ifnconst",       MF_IF,  0, {0,} },
++    { NULL, v_ifnconst, "ifndef",         MF_IF,  0, {0,} },
+     { NULL, v_if      , "if",             MF_IF,  0, {0,} },
+     { NULL, v_else    , "else",           MF_IF,  0, {0,} },
+     { NULL, v_endif   , "endif",          MF_IF,  0, {0,} },
+@@ -124,6 +127,16 @@ MNEMONIC Ops[] = {
+     { NULL, v_processor,"processor",      0,      0, {0,} },
+     { NULL, v_incbin  , "incbin",         0,      0, {0,} },
+     { NULL, v_incdir  , "incdir",         0,      0, {0,} },
++
++#ifdef WITH_STRICT_CAMELCASE_CHECKING		// enforce uppercase/lowercase to be strictly checked
++    // allow both uppercase and lowercase spelling for the following reserved words
++    { NULL, v_dc      , "DC",             0,      0, {0,} },
++    { NULL, v_ds      , "DS",             0,      0, {0,} },
++    { NULL, v_org     , "ORG",            0,      0, {0,} },
++    { NULL, v_equ     , "EQU",            0,      0, {0,} },
++    { NULL, v_echo    , "ECHO",           0,      0, {0,} },
++    { NULL, v_processor,"PROCESSOR",      0,      0, {0,} },
++#endif
+     MNEMONIC_NULL
+ };
+ 
+diff --git dasm-vanilla/src/main.c dasm/src/main.c
+index 6cdf031..ce052f7 100644
+--- dasm-vanilla/src/main.c
++++ dasm/src/main.c
+@@ -1215,6 +1215,8 @@ MNEMONIC *findmne(char *str)
+ {
+     int i;
+     char c;
++    int k;
++    unsigned int h;
+     MNEMONIC *mne;
+     char buf[64];
+     
+@@ -1224,14 +1226,34 @@ MNEMONIC *findmne(char *str)
+     }
+ 
+     for (i = 0; (c = str[i]); ++i) {
++#ifndef WITH_STRICT_CAMELCASE_CHECKING
+         if (c >= 'A' && c <= 'Z')
+             c += 'a' - 'A';
++#endif
+         buf[i] = c;
+     }
+     buf[i] = 0;
+-    for (mne = MHash[hash1(buf)]; mne; mne = mne->next) {
++
++    h = hash1(buf);
++    mne = MHash[h];
++
++    k = 0;
++    while (mne != NULL) {
++	if (Xdebug > 3)
++		fprintf(stderr,"%d\t[%s] [%s] %08lx %08lx\n", k, buf, mne->name, (long)mne, (long)mne->next);
++
+         if (strcmp(buf, mne->name) == 0)
+             break;
++
++	k++;
++	mne = mne->next;
++	if (mne != NULL) {
++		if ((mne == mne->next) && (k > 5)) {
++			fprintf(stderr,"BUG: %s:%d: chained list looped to itself without match, would lock up endlessly, who called us ?\n\tstr[%s] buf[%s] hash:%d", __FILE__, __LINE__, str, buf, h);
++			return NULL; // we need to return NULL here or the program will get stuck in an endless loop 
++			// the BUG vanished with  WITH_EXTENDED_HASH_SIZE  defined
++		}
++	}
+     }
+     return mne;
+ }
+@@ -1287,11 +1309,13 @@ void v_macro(char *str, MNEMONIC *dummy)
+         
+         mne = parse(buf);
+         if (Av[1][0]) {
+-            if (mne && mne->flags & MF_ENDM) {
++            if (mne != NULL) {
++            if (mne->flags & MF_ENDM) {
+                 if (!defined)
+                     mac->strlist = base;
+                 return;
+             }
++            }
+         }
+         if (!skipit && F_listfile && ListMode)
+             outlistfile(comment);
+@@ -1327,10 +1351,15 @@ void addhashtable(MNEMONIC *mne)
+ 
+ static unsigned int hash1(const char *str)
+ {
++    int n= 0;
+     unsigned int result = 0;
+     
+     while (*str)
++    {
++	n++;
++	result += n;
+         result = (result << 2) ^ *str++;
++    }
+     return result & MHASHAND;
+ }
+ 
+diff --git dasm-vanilla/src/ops.c dasm/src/ops.c
+index 3b0f341..916cfe4 100644
+--- dasm-vanilla/src/ops.c
++++ dasm/src/ops.c
+@@ -39,6 +39,7 @@ extern MNEMONIC    MneHD6303[];
+ extern MNEMONIC    Mne68705[];
+ extern MNEMONIC    Mne68HC11[];
+ extern MNEMONIC    MneF8[];
++extern MNEMONIC    Mne68908[];
+ 
+ void generate(void);
+ void genfill(long fill, long bytes, int size);
+@@ -113,6 +114,14 @@ void v_processor(char *str, MNEMONIC *dummy)
+         Processor = 0xf8;
+     }
+ 
++    if ((strcmp(str,"68908") == 0) || (strcmp(str,"68hc908") == 0)) {
++	if ( !bCalled ) {
++	    addhashtable(Mne68908);
++	}
++	MsbOrder = 1;		/*  msb,lsb */
++	Processor = 68908;
++    }
++
+     bCalled = true;
+ 
+     if ( !Processor )
+diff --git dasm-vanilla/src/symbols.c dasm/src/symbols.c
+index 54f6e2d..a09f6c4 100644
+--- dasm-vanilla/src/symbols.c
++++ dasm/src/symbols.c
+@@ -27,7 +27,7 @@
+ 
+ #include "asm.h"
+ 
+-static unsigned int hash1(const char *str, int len);
++static unsigned int hash1s(const char *str, int len);
+ SYMBOL *allocsymbol(void);
+ 
+ static SYMBOL org;
+@@ -85,7 +85,7 @@ SYMBOL *findsymbol(const char *str, int len)
+         str = buf;
+     }
+     
+-    h1 = hash1(str, len);
++    h1 = hash1s(str, len);
+     for (sym = SHash[h1]; sym; sym = sym->next)
+     {
+         if ((sym->namelen == len) && !memcmp(sym->name, str, len))
+@@ -122,19 +122,24 @@ SYMBOL *CreateSymbol( const char *str, int len )
+     sym->name = permalloc(len+1);
+     memcpy(sym->name, str, len);    /*	permalloc zeros the array for us */
+     sym->namelen = len;
+-    h1 = hash1(str, len);
++    h1 = hash1s(str, len);
+     sym->next = SHash[h1];
+     sym->flags= SYM_UNKNOWN;
+     SHash[h1] = sym;
+     return sym;
+ }
+ 
+-static unsigned int hash1(const char *str, int len)
++static unsigned int hash1s(const char *str, int len)
+ {
+     unsigned int result = 0;
+-    
++    int k = 0;
++
+     while (len--)
++    {
++	k++;
++	result += k;
+         result = (result << 2) ^ *str++;
++    }
+     return result & SHASHAND;
+ }
+ 
+diff --git a/test/doublemacro.asm b/test/doublemacro.asm
+index 987c58c..3c50935 100644
+--- dasm-vanilla/test/doublemacro.asm
++++ dasm/test/doublemacro.asm
+@@ -2,12 +2,12 @@
+ 
+ 	processor 6502
+ 
+- MAC testmac
++ .macro testmac
+ 	lda #1
+- ENDM
+- MAC testmac
++ .endm
++ .macro testmac
+ 	lda #1
+- ENDM
++ .endm
+ 
+ 	ORG $f800
+ 
+diff --git a/test/labelchanges.asm b/test/labelchanges.asm
+index 6eaa532..24360ab 100644
+--- dasm-vanilla/test/labelchanges.asm
++++ dasm/test/labelchanges.asm
+@@ -6,15 +6,15 @@
+ ;===============================================================================
+ 
+   ; automatically decide whether to use a branch or a jump
+-  MAC BNEJ
+-    IF ({1} - .) >= -126 && ({1} - .) <= 129
++  .macro bnej
++    #if ({1} - .) >= -126 && ({1} - .) <= 129
+       bne    {1}
+-    ELSE
++    #else
+       beq    skip$
+       jmp    {1}
+ skip$
+-    ENDIF
+-  ENDM
++    #endif
++  .endm
+ 
+ ;===============================================================================
+ 
+@@ -22,27 +22,27 @@ skip$
+ 
+ BackOk
+     ds      126, $ea
+-    BNEJ    BackOk
++    bnej    BackOk
+ 
+ BackJmp
+     ; this has to use "jmp"
+     ; and is detected as such
+     ds      126+1, $ea
+-    BNEJ    BackJmp
++    bnej    BackJmp
+ 
+     ; this can use "bne"
+-    BNEJ    ForwardOk
++    bnej    ForwardOk
+     ds      127, $ea
+ ForwardOk
+ 
+     ; this has to use "jmp"
+     ; and is detected as such
+-    BNEJ    ForwardJmp
++    bnej    ForwardJmp
+     ds      127+3, $ea
+ ForwardJmp
+ 
+     ; this has to use "jmp"
+     ; and is detected as such
+-    BNEJ    ForwardJmp2
++    bnej    ForwardJmp2
+     ds      127+2, $ea
+ ForwardJmp2
+--- dasm-vanilla/src/mne68908.c-orig	2020-07-11 16:40:39.000000000 +0200
++++ dasm/src/mne68908.c	2020-07-11 16:40:39.000000000 +0200
+@@ -0,0 +1,149 @@
++
++/*
++ *  MNE68908.C
++ *
++ *  (c)Copyright 1988, Matthew Dillon, All Rights Reserved.
++ */
++
++#include "asm.h"
++
++
++#define AFSTD		(AF_BYTEADR | AF_BYTEADRX | AF_WORDADR | AF_WORDADRX | AF_0X)
++
++#define AF_BCLR  	(AF_BYTEADR|AF_BYTEADRX|AF_BYTEADRY)
++
++#define AF_HMASK	(AF_IMM8 | AF_BYTEADR | AF_BYTEADRX | AF_WORDADR | AF_WORDADRX | AF_0X | AF_BYTEADR_SP | AF_WORDADR_SP)
++
++#define AF_IMASK    	(AF_BYTEADR| AF_BYTEADRX| AF_0X| AF_BYTEADR_SP)
++
++
++MNEMONIC Mne68908[] = {
++
++    { NULL, v_mnemonic, "adc", 0, AF_HMASK, { 0xA9, 0xB9, 0xE9, 0xC9, 0xD9, 0xF9, 0x9EE9, 0x9ED9 } },
++    { NULL, v_mnemonic, "add", 0, AF_HMASK, { 0xAB, 0xBB, 0xEB, 0xCB, 0xDB, 0xFB, 0x9EEB, 0x9EDB } },
++    { NULL, v_mnemonic, "aiS", 0, AF_IMM8, { 0xa7 } },
++    { NULL, v_mnemonic, "aiX", 0, AF_IMM8, { 0xaf } },
++    { NULL, v_mnemonic, "and", 0, AF_HMASK, { 0xA4, 0xB4, 0xE4, 0xC4, 0xD4, 0xF4, 0x9EE4, 0x9ED4 } },
++    { NULL, v_mnemonic, "asl", 0, AF_IMASK, { 0x38, 0x68, 0x78, 0x9E68 } },
++    { NULL, v_mnemonic, "aslA", 0,AF_IMP, { 0x48 } },
++    { NULL, v_mnemonic, "aslX", 0,AF_IMP, { 0x58 } },
++    { NULL, v_mnemonic, "asr", 0, AF_IMASK, { 0x37, 0x67, 0x77, 0x9E67 } },
++    { NULL, v_mnemonic, "asrA", 0,AF_IMP, { 0x47 } },
++    { NULL, v_mnemonic, "asrX", 0,AF_IMP, { 0x57 } },
++    { NULL, v_mnemonic, "bcc", 0, AF_REL, { 0x24 } },
++    { NULL, v_mnemonic, "bclr", MF_IMOD,AF_BITMOD, { 0x11 } },
++    { NULL, v_mnemonic, "bcs", 0, AF_REL, { 0x25 } },
++    { NULL, v_mnemonic, "beq", 0, AF_REL, { 0x27 } },
++    { NULL, v_mnemonic, "bhcc", 0,AF_REL, { 0x28 } },
++    { NULL, v_mnemonic, "bhcs", 0,AF_REL, { 0x29 } },
++    { NULL, v_mnemonic, "bhi", 0, AF_REL, { 0x22 } },
++    { NULL, v_mnemonic, "bhs", 0, AF_REL, { 0x24 } },
++    { NULL, v_mnemonic, "bih", 0, AF_REL, { 0x2F } },
++    { NULL, v_mnemonic, "bil", 0, AF_REL, { 0x2E } },
++    { NULL, v_mnemonic, "bit", 0, AF_HMASK, { 0xA5, 0xB5, 0xE5, 0xC5, 0xD5, 0xF5, 0x9EE5, 0x9ED5 } },
++    { NULL, v_mnemonic, "blo", 0, AF_REL, { 0x25 } },
++    { NULL, v_mnemonic, "bls", 0, AF_REL, { 0x23 } },
++    { NULL, v_mnemonic, "bmc", 0, AF_REL, { 0x2C } },
++    { NULL, v_mnemonic, "bmi", 0, AF_REL, { 0x2B } },
++    { NULL, v_mnemonic, "bms", 0, AF_REL, { 0x2D } },
++    { NULL, v_mnemonic, "bne", 0, AF_REL, { 0x26 } },
++    { NULL, v_mnemonic, "bpl", 0, AF_REL, { 0x2A } },
++    { NULL, v_mnemonic, "bra", 0, AF_REL, { 0x20 } },
++    { NULL, v_mnemonic, "brclr", MF_IMOD|MF_REL,   AF_BITBRAMOD, { 0x01 } },
++    { NULL, v_mnemonic, "brn", 0, AF_REL, { 0x21 } },
++    { NULL, v_mnemonic, "brset", MF_IMOD|MF_REL,   AF_BITBRAMOD, { 0x00 } },
++    { NULL, v_mnemonic, "bset", MF_IMOD,AF_BITMOD, { 0x10 } },
++    { NULL, v_mnemonic, "bsr", 0, AF_REL, { 0xAD } },
++
++    { NULL, v_mnemonic, "cbeqA", MF_MASK, AF_REL, { 0x41 } }, 
++    { NULL, v_mnemonic, "cbeq",  MF_REL, (AF_BYTEADR | AF_INDBYTEX | /*AF_0X |*/ AF_BYTEADR_SP), { 0x31, 0x61/*,  0x71*/, 0x9E61 } }, 
++    { NULL, v_mnemonic, "cbeqX", MF_MASK, AF_REL, { 0x51 } }, 
++
++    { NULL, v_mnemonic, "clc", 0, AF_IMP, { 0x98 } },
++    { NULL, v_mnemonic, "cli", 0, AF_IMP, { 0x9A } },
++    { NULL, v_mnemonic, "clr", 0, AF_BYTEADR|AF_BYTEADRX|AF_0X|AF_BYTEADR_SP, { 0x3F, 0x6F, 0x7F, 0x9E6F } },
++    { NULL, v_mnemonic, "clrA", 0,AF_IMP, { 0x4F } },
++    { NULL, v_mnemonic, "clrH", 0,AF_IMP, { 0x8C } },
++    { NULL, v_mnemonic, "clrX", 0,AF_IMP, { 0x5F } },
++    { NULL, v_mnemonic, "cmp", 0, AF_HMASK, { 0xA1, 0xB1, 0xE1, 0xC1, 0xD1, 0xF1, 0x9EE1, 0x9ED1 } },
++    { NULL, v_mnemonic, "com", 0, AF_IMASK, { 0x33, 0x63, 0x73, 0x9e63 } },
++    { NULL, v_mnemonic, "comA", 0,AF_IMP, { 0x43 } },
++    { NULL, v_mnemonic, "comX", 0,AF_IMP, { 0x53 } },
++    { NULL, v_mnemonic, "cpHX", 0, AF_IMM16|AF_BYTEADR, { 0x65 , 0x75} },
++    { NULL, v_mnemonic, "cpX", 0, AF_HMASK, { 0xA3, 0xB3, 0xE3, 0xC3, 0xD3, 0xF3, 0x9EE3, 0x9ED3 } },
++
++//   [offs+X]  [X]  [SP]
++    { NULL, v_mnemonic, "dbnz",  MF_REL, (AF_BYTEADR | AF_BYTEADRX | AF_0X | AF_BYTEADR_SP), { 0x3B, 0x6B, 0x7B, 0x9E6B } }, 
++    { NULL, v_mnemonic, "dbnzA",      0, AF_REL, { 0x4b } },
++//    { NULL, v_mnemonic, "dbnz",  MF_MASK, AF_REL, { 0x3b } },
++    { NULL, v_mnemonic, "dbnzX",      0, AF_REL, { 0x5b } },
++
++    { NULL, v_mnemonic, "dec", 0, AF_IMASK, { 0x3A, 0x6A, 0x7A, 0x9E6A } },
++    { NULL, v_mnemonic, "decA", 0,AF_IMP, { 0x4A } },
++    { NULL, v_mnemonic, "decX", 0,AF_IMP, { 0x5A } },
++    { NULL, v_mnemonic, "div", 0, AF_IMP, { 0x52 } },
++    { NULL, v_mnemonic, "eor", 0, AF_HMASK, { 0xA8, 0xB8, 0xE8, 0xC8, 0xD8, 0xF8, 0x9EE8, 0x9ED8 } },
++    { NULL, v_mnemonic, "inc", 0, AF_IMASK, { 0x3C, 0x6C, 0x7C, 0x9E6C } },
++    { NULL, v_mnemonic, "incA", 0,AF_IMP, { 0x4C } },
++    { NULL, v_mnemonic, "incX", 0,AF_IMP, { 0x5C } },
++
++    { NULL, v_mnemonic, "jmp", 0, AFSTD, { 0xBC, 0xEC, 0xCC, 0xDC, 0xFC } },
++
++    { NULL, v_mnemonic, "jsr", 0, AFSTD, { 0xBD, 0xED, 0xCD, 0xDD, 0xFD } },
++
++    { NULL, v_mnemonic, "ldA", 0, AF_HMASK, { 0xA6, 0xB6, 0xE6, 0xC6, 0xD6, 0xF6, 0x9EE6, 0x9ED6 } },
++
++    { NULL, v_mnemonic, "ldHX", 0, AF_IMM16|AF_BYTEADR, { 0x45, 0x55 } },
++    { NULL, v_mnemonic, "ldX", 0, AF_HMASK, { 0xAE, 0xBE, 0xEE, 0xCE, 0xDE, 0xFE, 0x9EEE, 0x9EDE } },
++    { NULL, v_mnemonic, "lsl", 0, AF_BYTEADR|AF_BYTEADRX|AF_0X|AF_BYTEADR_SP, { 0x38, 0x68, 0x78, 0x9E68 } },
++    { NULL, v_mnemonic, "lslA", 0,AF_IMP, { 0x48 } },
++    { NULL, v_mnemonic, "lslX", 0,AF_IMP, { 0x58 } },
++    { NULL, v_mnemonic, "lsr", 0, AF_BYTEADR|AF_BYTEADRX|AF_0X|AF_BYTEADR_SP, { 0x34, 0x64, 0x74, 0x9E64 } },
++    { NULL, v_mnemonic, "lsrA", 0,AF_IMP, { 0x44 } },
++    { NULL, v_mnemonic, "lsrX", 0,AF_IMP, { 0x54 } },
++
++    { NULL, v_mnemonic, "mov", MF_MASK, AF_IMM8|AF_BYTEADR, {0x6e, 0x4e} },
++    { NULL, v_mnemonic, "X+mov", 0, AF_BYTEADR, {0x5e} },
++    { NULL, v_mnemonic, "movX+", 0, AF_BYTEADR, {0x7e} },
++
++    { NULL, v_mnemonic, "neg",  0, AF_BYTEADR|AF_BYTEADRX|AF_0X|AF_BYTEADR_SP, { 0x30, 0x60, 0x70, 0x9E60 } },
++    { NULL, v_mnemonic, "negA", 0,AF_IMP, { 0x40 } },
++    { NULL, v_mnemonic, "negX", 0,AF_IMP, { 0x50 } },
++    { NULL, v_mnemonic, "nop", 0, AF_IMP, { 0x9D } },
++    { NULL, v_mnemonic, "orA", 0, AF_HMASK, { 0xAA, 0xBA, 0xEA, 0xCA, 0xDA, 0xFA, 0x9EEA, 0x9EDA } },
++    { NULL, v_mnemonic, "pshA", 0, AF_IMP, { 0x87 } },
++    { NULL, v_mnemonic, "pshH", 0, AF_IMP, { 0x8b } },
++    { NULL, v_mnemonic, "pshX", 0, AF_IMP, { 0x89 } },
++    { NULL, v_mnemonic, "pulA", 0, AF_IMP, { 0x86 } },
++    { NULL, v_mnemonic, "pulH", 0, AF_IMP, { 0x8a } },
++    { NULL, v_mnemonic, "pulX", 0, AF_IMP, { 0x88 } },
++    { NULL, v_mnemonic, "rol", 0, AF_BYTEADR|AF_BYTEADRX|AF_0X|AF_BYTEADR_SP, { 0x39, 0x69, 0x79, 0x9E69 } },
++    { NULL, v_mnemonic, "rolA", 0,AF_IMP, { 0x49 } },
++    { NULL, v_mnemonic, "rolX", 0,AF_IMP, { 0x59 } },
++    { NULL, v_mnemonic, "ror", 0, AF_BYTEADR|AF_BYTEADRX|AF_0X|AF_BYTEADR_SP, { 0x36, 0x66, 0x76, 0x9E66 } },
++    { NULL, v_mnemonic, "rorA", 0,AF_IMP, { 0x46 } },
++    { NULL, v_mnemonic, "rorX", 0,AF_IMP, { 0x56 } },
++    { NULL, v_mnemonic, "rsp", 0, AF_IMP, { 0x9C } },
++    { NULL, v_mnemonic, "rti", 0, AF_IMP, { 0x80 } },
++    { NULL, v_mnemonic, "rts", 0, AF_IMP, { 0x81 } },
++    { NULL, v_mnemonic, "sbc", 0, AF_HMASK     , { 0xA2, 0xB2, 0xE2, 0xC2, 0xD2, 0xF2, 0x9EE2, 0x9ED2 } },
++    { NULL, v_mnemonic, "sec", 0, AF_IMP, { 0x99 } },
++    { NULL, v_mnemonic, "sei", 0, AF_IMP, { 0x9B } },
++    { NULL, v_mnemonic, "stA", 0, AFSTD|AF_BYTEADR_SP|AF_WORDADR_SP, { 0xB7, 0xE7, 0xC7, 0xD7, 0xF7, 0x9EE7, 0x9ED7 } },
++    { NULL, v_mnemonic, "stHX", 0, AF_BYTEADR, { 0x35 } }, 
++    { NULL, v_mnemonic, "stX", 0, AFSTD|AF_BYTEADR_SP|AF_WORDADR_SP, { 0xBF, 0xEF, 0xCF, 0xDF, 0xFF, 0x9EEF, 0x9EDF } },
++    { NULL, v_mnemonic, "sub", 0, AF_HMASK, { 0xA0, 0xB0, 0xE0, 0xC0, 0xD0, 0xF0, 0x9EE0, 0x9ED0 } },
++    { NULL, v_mnemonic, "swi", 0, AF_IMP, { 0x83 } },
++    { NULL, v_mnemonic, "tAP", 0, AF_IMP, { 0x84 } },
++    { NULL, v_mnemonic, "tAX", 0, AF_IMP, { 0x97 } },
++    { NULL, v_mnemonic, "tHXS", 0, AF_IMP, { 0x94 } },
++    { NULL, v_mnemonic, "tPA", 0, AF_IMP, { 0x85 } },
++    { NULL, v_mnemonic, "tSHX", 0, AF_IMP, { 0x95 } },
++    { NULL, v_mnemonic, "tst", 0, AF_BYTEADR|AF_BYTEADRX|AF_0X|AF_BYTEADR_SP, {0x3D, 0x6D, 0x7D, 0x9e6D } },
++    { NULL, v_mnemonic, "tstA", 0,AF_IMP, { 0x4D } },
++    { NULL, v_mnemonic, "tstX", 0,AF_IMP, { 0x5D } },
++    { NULL, v_mnemonic, "tXA", 0, AF_IMP, { 0x9F } },
++
++    MNEMONIC_NULL
++};
++
+--- dasm-vanilla/test/suite68hc908.asm-orig	2020-07-11 16:39:50.000000000 +0200
++++ dasm/test/suite68hc908.asm	2020-07-11 05:01:11.000000000 +0200
+@@ -0,0 +1,360 @@
++;
++;   regression test for all opcodes for 68hc908 controller 
++;   
++;   two opcodes with indirect X adressing are not yet implemented
++;	dbnz	(X), jumpLabel	
++;	cbeq	(X), jumpLabel
++;			
++;    one must add 0 to circumvent this problem, the code will become one (that zero) byte larger
++;	dbnz	(0,X), jumpLabel
++;	cbeq	(0,X), jumpLabel
++;
++
++
++	.PROCESSOR	68hc908
++
++	.trace		1
++
++PTB	.EQU		1
++DDRB	.EQU		5
++
++
++RAM_START	.EQU	0x40
++
++	.ORG		0xFB00
++
++	.byte		0xba,0xdc,0x0d,0xe0
++
++	adc	#6
++	adc.b	RAM_START
++	adc	7,X
++	adc	constant0
++	adc	0x300,X
++	adc	,X
++	adc	5,SP
++	adc.w	500,SP
++
++	add	#6
++	add.b	RAM_START
++	add	7,X
++	add	constant0
++	add	0x300,X
++	add	,X
++	add	5,SP
++	add.w	500,SP
++
++	aiS		#5
++	aiX		#6
++	
++	and	#6
++	and.b	RAM_START
++	and	7,X
++	and	constant0
++	and	0x300,X
++	and	,X
++	and	5,SP
++	and.w	500,SP
++
++	asl	RAM_START
++	asl	3,X
++	asl	,X
++	asl	5,SP
++	aslA	
++	aslX
++
++	asr	RAM_START
++	asr	3,X
++	asr	,X
++	asr	5,SP
++	asrA	
++	asrX	
++
++	bcc	frontLoop	
++	bcs	frontLoop
++	beq 	frontLoop	
++	bhcc	frontLoop	
++	bhcs	frontLoop	
++	bhi	frontLoop
++	bhs	frontLoop	
++	bih	frontLoop	
++	bil	frontLoop	
++
++	bit	#6
++	bit.b	RAM_START
++	bit	7,X
++	bit	constant0
++	bit	0x300,X
++	bit	,X
++	bit	5,SP
++	bit.w	500,SP
++	
++	blo	frontLoop	
++	bls	frontLoop
++	bmc	frontLoop	
++	bmi	frontLoop	
++	bms	frontLoop	
++	bne	frontLoop	
++	bpl	frontLoop	
++	bra	frontLoop	
++	brn	frontLoop	
++
++subRoutine:
++	rts    
++
++	brset		0,PTB,frontLoop
++	brset           1,PTB,frontLoop
++	brset           2,PTB,frontLoop
++	brset           3,PTB,frontLoop
++	brset           4,PTB,frontLoop
++	brset           5,PTB,frontLoop
++	brset           6,PTB,frontLoop
++	brset           7,PTB,frontLoop
++
++	bset		0,PTB
++	bset		1,PTB
++	bset		2,PTB
++	bset		3,PTB
++	bset		4,PTB
++	bset		5,PTB
++	bset		6,PTB
++	bset		7,PTB
++
++	bsr 	subRoutine
++
++	cbeqA		$20,frontLoop	
++	cbeq		9,frontLoop
++	cbeq		(0xA,X),frontLoop
++	cbeq		0xB,SP,frontLoop
++	cbeqX		0x40,frontLoop	
++
++	clc
++	cli
++frontLoop:
++
++	clr	RAM_START
++	clr	3,X
++	clr	,X
++	clr	5,SP
++	clrA
++	clrH
++	clrX
++	
++	cmp	#6
++	cmp.b	RAM_START
++	cmp	7,X
++	cmp	constant0
++	cmp	0x300,X
++	cmp	,X
++	cmp	5,SP
++	cmp.w	500,SP
++
++	com	RAM_START
++	com	3,X
++	com	,X
++	com	5,SP
++	comA
++	comX
++	
++	cpHX	RAM_START
++	cpHX	#constant0
++
++	cpX	#6
++	cpX.b	RAM_START
++	cpX	7,X
++	cpX	constant0
++	cpX	0x300,X
++	cpX	,X
++	cpX	5,SP
++	cpX.w	500,SP
++	
++backLoop:
++	dbnzA   backLoop
++	dbnz	4,backLoop
++	dbnz	5,X,backLoop
++	dbnz	6,SP,backLoop
++	dbnzX	backLoop	
++
++	dec	RAM_START
++	dec	3,X
++	dec	,X
++	dec	5,SP	
++	decA
++	decX
++
++	div
++
++	eor	#6
++	eor.b	RAM_START
++	eor	7,X
++	eor	constant0
++	eor	0x300,X
++	eor	,X
++	eor	5,SP
++	eor.w	500,SP
++
++	inc	RAM_START
++	inc	3,X
++	inc	,X
++	inc	5,SP
++	incA
++	incX
++
++	jmp.8 	RAM_START
++	jmp 	vector0	
++	jmp	3,X
++	jmp 	$300,X
++	jmp	,X
++
++	jsr.8	RAM_START
++	jsr	vector0
++	jsr	3,X
++	jsr	0x300,X
++	jsr	,X
++
++	ldA	#6
++	ldA.b	RAM_START
++	ldA	7,X
++	ldA	constant0
++	ldA	0x300,X
++	ldA	,X
++	ldA	5,SP
++	ldA.w	500,SP
++	
++	ldHX	#500
++	ldHX	RAM_START
++
++	ldX	#55
++	ldX.b	RAM_START
++	ldX	7,X
++	ldX	constant0
++	ldX	0x300,X
++	ldX	,X
++	ldX	5,SP
++	ldX.w	500,SP
++	
++	lsl	RAM_START
++	lsl	3,X
++	lsl	,X
++	lsl	5,SP	
++	lslA
++	lslX
++	
++	lsr	RAM_START
++	lsr	3,X
++	lsr	,X
++	lsr	5,SP
++	lsrA
++	lsrX
++	
++	
++	mov	#5, RAM_START
++	X+mov	RAM_START
++	mov	10, RAM_START
++	movX+	RAM_START
++	
++	neg	RAM_START
++	neg	3,X
++	neg	,X
++	neg	5,SP	
++	negA
++	negX
++
++	nop
++	
++	orA	#6
++	orA.b	RAM_START
++	orA	7,X
++	orA	constant0
++	orA	0x300,X
++	orA	,X
++	orA	5,SP
++	orA.w	500,SP
++	
++	pshA
++	pshH
++	pshX
++	pulA
++	pulH
++	pulX
++
++	rol	RAM_START
++	rol	3,X
++	rol	,X
++	rol	5,SP
++	rolA
++	rolX
++
++	ror	RAM_START
++	ror	3,X
++	ror	,X
++	ror	5,SP
++	rorA
++	rorX
++
++	rsp
++    
++dummyISR:	
++	rti
++	
++	sbc	#6
++	sbc.b	RAM_START
++	sbc	7,X
++	sbc	constant0
++	sbc	0x300,X
++	sbc	,X
++	sbc	5,SP
++	sbc.w	500,SP
++	
++	sec	
++	sei	
++
++	stA.b	RAM_START
++	stA	7,X
++	stA	constant0
++	stA	0x300,X
++	stA	,X
++	stA	5,SP
++	stA.w	500,SP
++	
++	stHX	RAM_START
++	
++	stX.b	RAM_START
++	stX	7,X
++	stX	constant0
++	stX	0x300,X
++	stX	,X
++	stX	5,SP
++	stX.w	500,SP	
++
++	sub	#6
++	sub.b 	RAM_START
++	sub	7,X
++	sub	constant0
++	sub	0x300,X
++	sub	,X
++	sub	5,SP
++	sub.w	500,SP
++
++	swi
++	tAP
++	tAX
++	tHXS
++	tPA
++	tSHX
++
++	tst.8	RAM_START
++	tst	3,X
++	tst	,X
++	tst	4,SP
++
++	tstA
++	tstX
++	tXA
++
++;	.ORG		0xFE00
++constant0:
++	.word		0
++vector0:
++	.word		dummyISR
++
++
+--- dasm-vanilla/test/suite68hc908.hex.ref-orig	2020-07-11 16:40:00.000000000 +0200
++++ dasm/test/suite68hc908.hex.ref	2020-07-11 05:02:11.000000000 +0200
+@@ -0,0 +1,38 @@
++:10FB0000BADC0DE0A906B940E907C9FD43D90300F5
++:10FB1000F99EE9059ED901F4AB06BB40EB07CBFD8E
++:10FB200043DB0300FB9EEB059EDB01F4A705AF065C
++:10FB3000A406B440E407C4FD43D40300F49EE405E6
++:10FB40009ED401F438406803789E680548583740D1
++:10FB50006703779E6705475724732571276F286DC4
++:10FB6000296B226924672F652E63A506B540E5073A
++:10FB7000C5FD43D50300F59EE5059ED501F4254D51
++:10FB8000234B2C492B472D4526432A41203F213D1D
++:10FB90008100013902013604013306013008012DCC
++:10FBA0000A012A0C01270E0124100112011401166A
++:10FBB0000118011A011C011E01ADD541200F3109A8
++:10FBC0000C610A099E610B05514002989A3F406FF3
++:10FBD000037F9E6F054F8C5FA106B140E107C1FD19
++:10FBE00043D10300F19EE1059ED101F4334063034C
++:10FBF000739E63054353754065FD43A306B340E31D
++:10FC000007C3FD43D30300F39EE3059ED301F44BEA
++:10FC1000FE3B04FB6B05F89E6B06F45BF23A406A10
++:10FC2000037A9E6A054A5A52A806B840E807C8FDFA
++:10FC300043D80300F89EE8059ED801F43C406C03CD
++:10FC40007C9E6C054C5CBC40CCFD45EC03DC0300A9
++:10FC5000FCBD40CDFD45ED03DD0300FDA606B6402D
++:10FC6000E607C6FD43D60300F69EE6059ED601F4E0
++:10FC70004501F45540AE37BE40EE07CEFD43DE03EE
++:10FC800000FE9EEE059EDE01F438406803789E6813
++:10FC900005485834406403749E640544546E05401E
++:10FCA0005E404E0A407E4030406003709E600540DA
++:10FCB000509DAA06BA40EA07CAFD43DA0300FA9E3D
++:10FCC000EA059EDA01F4878B89868A8839406903C0
++:10FCD000799E6905495936406603769E6605465603
++:10FCE0009C80A206B240E207C2FD43D20300F29E0E
++:10FCF000E2059ED201F4999BB740E707C7FD43D7C1
++:10FD00000300F79EE7059ED701F43540BF40EF079B
++:10FD1000CFFD43DF0300FF9EEF059EDF01F4A00649
++:10FD2000B040E007C0FD43D00300F09EE0059ED048
++:10FD300001F48384979485953D406D037D9E6D0409
++:07FD40004D5D9F0000FCE196
++:00000001FF

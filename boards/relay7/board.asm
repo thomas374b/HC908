@@ -4,15 +4,16 @@
 ;
 ;
 
-	.INCLUDE	mc68hc908jk3.asm
+	#include	"mc68hc908jk3.asm"
 
-	.IF	(START == RAM_START)
-; probably running rom RAM in monitor mode
+	#if	(START < [RAM_START+RAM_SIZE] )
+; probably running rom RAM in monitor mode, baud-rate is 7680
+; TODO: veryfy system clock with scope and adapt these numbers
 F_CPU	.EQU	2041322
-	.ELSE
-; running from FLASH in user mode
+	#else
+; running from FLASH in user mode, baud-rate is 3840
 F_CPU	.EQU	1003422
-	.ENDIF
+	#endif
 
 
 J2_P1	.EQU	PTD5			; TCH1

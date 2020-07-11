@@ -1,5 +1,5 @@
 
-	.IFNCONST	BITS_68HC908JB8
+	#ifndef	BITS_68HC908JB8
 
 BITS_68HC908JB8 	.EQU 	1
 
@@ -102,7 +102,7 @@ HVEN		.EQU		$08
 
 
 
-	.ENDIF
+	#endif
 
 
 
