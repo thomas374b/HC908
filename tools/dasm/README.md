@@ -16,9 +16,9 @@ operation lowercase and the operand in uppercase. It works well because DASM is 
 insensitive but be aware of it when you state your own definitions.
 
 examples:
-    ldA	   #6	; load value 6 to register 'A'
-    stHX   5	; store content of register 'HX' to location @ address 5
-    pulA	; pull register A from stack
+ ldA	#6	; load value 6 to register 'A'
+ stHX   5	; store content of register 'HX' to location @ address 5
+ pulA	    ; pull register A from stack
 
 Only two mnemonic-addressmode combinations are not yet implemented since it would require 
 more difficult changes for the DASM engine. See test/suite68hc908.asm for details.
