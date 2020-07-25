@@ -18,6 +18,7 @@ $flashend = $flashstart + $flashsize;
 
 $code = 0;
 $ram = 0;
+$home = 0;
 
 while(<MF>) 
 {
@@ -39,7 +40,14 @@ while(<MF>)
 				$ram += $size;
 			} else {
 				if (($flashstart <= $addr) && ($addr < $flashend)) {
-					$code += $size;
+					if (/HOME/) {
+						if ($home == 0) {
+							$code += $size;
+							$home = 1;
+						}
+					} else {
+						$code += $size;
+					}
 				} else {			
 					if ($size > 0) {
 						print STDERR sprintf("%d bytes outside address space: 0x%04X\n", $size, $addr);

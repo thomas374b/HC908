@@ -9,8 +9,8 @@ include .CPU
 
 VECTOR_MODE = -z $(FLASH_SIZE)
 
-START = $(NATIVE_RAM_START)
-# START = $(FLASH_START)
+# START = $(NATIVE_RAM_START)
+START = $(FLASH_START)
 
 DEFINES += -DSTART=$(START)
 DEFINES += -DRAM_START=$(RAM_START)
@@ -25,15 +25,16 @@ GENERICS = macros.asm fancy_macros.asm bits68hc908.asm mc68hc908$(VARIANT).asm r
 
 DEPEND = board.asm $(GENERICS)
 
-TARGET = fastblink
+# TARGET = fastblink
+TARGET = memset
 
-DASM_OPTS = -f3 -E2 -S -T1 -v4 
+DASM_OPTS = -v4 -f3 -E2 -S -T1 -R
 
 all: $(TARGET)-final.s19
 
 $(TARGET).bin: $(TARGET).asm $(DEPEND) Makefile mklinks.mk
 	@echo dasm $(TARGET).asm \-\> $@
-	dasm $(TARGET).asm $(DASM_OPTS) -o$(TARGET).bin -s$(TARGET).sym -l$(TARGET).lst $(DEFINES)
+	dasm $(TARGET).asm $(DASM_OPTS) -o$(TARGET).bin -s$(TARGET).sym -l$(TARGET).lst $(DEFINES) || rm -f $(TARGET).bin
 
 clean:
 	rm -f *.bin *.s19 *.sym

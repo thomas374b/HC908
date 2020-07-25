@@ -3,6 +3,9 @@
  *
  *  Created on: 10.06.2020
  *      Author: pantec
+ *
+ *  timer functions to realize a system clock in small embedded systems
+ *
  */
 
 #ifndef TIMER_HC908_H_
@@ -11,7 +14,6 @@
 
 #include "project.h"
 
-// #include <string.h>
 #define		PREPRO_DIV256(x)		(x / 256L)
 #define		PREPRO_DIV100(x)		(x / 100L)
 #define		PREPRO_DIV2(x)			(x / 2L)
@@ -148,9 +150,9 @@ typedef struct {
 	timer_uint_t	now;				// actual time
 
 #ifndef VERY_SIMPLE_TIMER
-	timer_uint_t	last_now;
+//	timer_uint_t	last_now;
 #if (TIMER_WRAP != OCR_INTERNAL_VAL)
-	timer_frac_t	tmp;
+//	timer_frac_t	tmp;
 #endif
 #endif
 
@@ -174,6 +176,43 @@ typedef struct {
 	#ifdef WITH_MDELAY
 		extern	void			getTime(void);
 	#endif
+#endif
+
+
+#if (TIMER_WRAP & 0x01)
+	// no optimization possible
+	#define		TIMER_WRAP_D		1
+#else
+#if (TIMER_WRAP & 0x03)
+	#define		TIMER_WRAP_D		2
+#else
+#if (TIMER_WRAP & 0x07)
+	#define		TIMER_WRAP_D		4
+#else
+#if (TIMER_WRAP & 0x0F)
+	#define		TIMER_WRAP_D		8
+#else
+#if (TIMER_WRAP & 0x1F)
+	#define		TIMER_WRAP_D		16
+#else
+#if (TIMER_WRAP & 0x3F)
+	#define		TIMER_WRAP_D		32
+#else
+	#warning "TIMER_WRAP_D need optimization constant"
+	#define		TIMER_WRAP_D		1
+#endif
+#endif
+#endif
+#endif
+#endif
+#endif
+
+#define		TIMER_WRAP_M 		(TIMER_WRAP/TIMER_WRAP_D)
+#define		TIMER_WRAP_F		(256/TIMER_WRAP_D)
+#define		TIMER_WRAP_F2		(TIMER_WRAP_F/2)
+
+#if ((TIMER_WRAP_M * 255) > 65535)
+	#warning "TIMER_WRAP too large, need 32bit calculations"
 #endif
 
 
@@ -230,31 +269,24 @@ getTime(void)
 
 #else
 	// precise timing calculation
-#if (TIMER_WRAP != OCR_INTERNAL_VAL)
-	timer_data.tmp = timer_data.tfrac;
-#endif
+	timer_data.now *= TIMER_WRAP;
 
-
-#if (TIMER_WRAP != OCR_INTERNAL_VAL)
-	timer_data.tmp *= TIMER_WRAP;
-
+	// Compiler produziert Schund, Zahlen werden größer als 16bit, keine Warnung
+	timer_frac_t tmp = timer_data.tfrac;
+	tmp *= TIMER_WRAP_M;
+#if (OCR_INTERNAL_VAL == 256)
+	tmp += TIMER_WRAP_F2;
+	tmp /= TIMER_WRAP_F;
+//	tmp >>= 5;
+#else
 #if ((OCR_INTERNAL_VAL & 0x0F) != 0)
 	timer_data.tmp += (OCR_INTERNAL_VAL/2);  // richtig runden
 #endif
-	// the compiler should optimize this way
-#if (OCR_INTERNAL_VAL == 32768)
-	timer_data.tmp >>= 7;
-#else
 	timer_data.tmp /= OCR_INTERNAL_VAL;
 #endif
+	timer_data.now += tmp;
 #endif
-	timer_data.now *= TIMER_WRAP;
-#if (TIMER_WRAP == OCR_INTERNAL_VAL)
-	timer_data.now += timer_data.tfrac;
-#else
-	timer_data.now += timer_data.tmp;
-#endif
-#endif
+
 
 #ifdef WITH_GETTIME_FUNC
 	return timer_data.now;
@@ -333,27 +365,15 @@ uint8_t at_timer_interval(const timer_uint_t gap, timer_uint_t *expires) // reen
 
 
 #ifdef VERY_SIMPLE_TIMER
-
-//#ifdef EIGHT_BIT_TIMER
-//	#define		TIMER_CALC_VALUE		(TIMER_PRESCALER_VALUE * 10UL * OCR_INTERNAL_VAL)
-//#else
-//	#define 	MS_TO_GAP(x)		((F_CPU * x) / (TIMER_PRESCALER_VALUE * 1000))
-//#endif
-
-//	#define		TIMER_CALC_ROUND_UP		PREPRO_DIV2( TIMER_CALC_VALUE)
-//	#define		F_CPU_DIV100			PREPRO_DIV100(F_CPU)
-
 	#define 	MS_TO_GAP(x)		(((x * OCR_INTERNAL_VAL)  + (TIMER_WRAP/2)) / TIMER_WRAP)
 
 	#define		OCR_TO_TICKS_DIV	PREPRO_DIV256(OCR1A_MAX_VAL)
 	#define		TICKS_ROUNDUP		PREPRO_DIV2(OCR_TO_TICKS_DIV)
 	#define 	TICKS_TO_MS(x)		(((x * TIMER_WRAP)  + TICKS_ROUNDUP) / OCR_TO_TICKS_DIV)
 
-
 	#define 	at_interval(x,y)		at_timer_interval(MS_TO_GAP(x),  y)
 #else
-//	#define		MS_TO_GAP(x)			(((F_CPU_DIV100 * x) + TIMER_CALC_ROUND_UP) / TIMER_CALC_VALUE)
-	//#define 	at_interval(x,y)		at_timer_interval(x,  y)
+	#define 	at_interval(x,y)		at_timer_interval(x,  y)
 #endif
 
 

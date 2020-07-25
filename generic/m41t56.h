@@ -68,7 +68,7 @@ uint8_t m41t56_read_wa(uint8_t addr, uint8_t len)
 		if (i >= FIXED_I2C_DATA_LEN) {
 			break;
 		}
-		i2c_data_buf[i] = i2c_rx_byte_noAckCheck();
+		i2c_data.buffer[i] = i2c_rx_byte_noAckCheck();
 		// always ACK except for the last
 		r = acknak(i<len-1 ? 1 : 0);
 		if (r != 0) {
@@ -121,7 +121,7 @@ uint8_t m41t56_write(uint8_t addr, uint8_t len)
 			break;
 		}
 
-		r = i2c_tx_byte_OK0( i2c_data_buf[i] );
+		r = i2c_tx_byte_OK0( i2c_data.buffer[i] );
 		if (r != 0) {
 			// not acked
 			r |= 0x08;
@@ -159,7 +159,7 @@ uint8_t m41t56_read()
 	}
 
 	for (i=0; i<FIXED_I2C_DATA_LEN; i++) {
-		i2c_data_buf[i] = i2c_rx_byte_noAckCheck();
+		i2c_data.buffer[i] = i2c_rx_byte_noAckCheck();
 		// ALWAYS ACK
 		r = acknak(1);
 		if (r != 0) {
@@ -194,23 +194,23 @@ uint8_t m41t56_getClockByte(uint8_t i)
 	switch(i) {
 		case 0: return '2';
 		case 1: return '0';
-		case 2: return BCDchar(i2c_data_buf[6] >> 4);
-		case 3: return BCDchar(i2c_data_buf[6] & 0x0F);
+		case 2: return BCDchar(i2c_data.buffer[6] >> 4);
+		case 3: return BCDchar(i2c_data.buffer[6] & 0x0F);
 		case 4: return '/';
-		case 5: return BCDchar(i2c_data_buf[5] >> 4);
-		case 6: return BCDchar(i2c_data_buf[5] & 0x0F);
+		case 5: return BCDchar(i2c_data.buffer[5] >> 4);
+		case 6: return BCDchar(i2c_data.buffer[5] & 0x0F);
 		case 7: return '/';
-		case 8: return BCDchar(i2c_data_buf[4] >> 4);
-		case 9: return BCDchar(i2c_data_buf[4] & 0x0F);
+		case 8: return BCDchar(i2c_data.buffer[4] >> 4);
+		case 9: return BCDchar(i2c_data.buffer[4] & 0x0F);
 		case 10: return ' ';
-		case 11: return BCDchar(i2c_data_buf[2] >> 4);
-		case 12: return BCDchar(i2c_data_buf[2] & 0x0F);
+		case 11: return BCDchar(i2c_data.buffer[2] >> 4);
+		case 12: return BCDchar(i2c_data.buffer[2] & 0x0F);
 		case 13: return ':';
-		case 14: return BCDchar(i2c_data_buf[1] >> 4);
-		case 15: return BCDchar(i2c_data_buf[1] & 0x0F);
+		case 14: return BCDchar(i2c_data.buffer[1] >> 4);
+		case 15: return BCDchar(i2c_data.buffer[1] & 0x0F);
 		case 16: return ':';
-		case 17: return BCDchar(i2c_data_buf[0] >> 4);
-		case 18: return BCDchar(i2c_data_buf[0] & 0x0F);
+		case 17: return BCDchar(i2c_data.buffer[0] >> 4);
+		case 18: return BCDchar(i2c_data.buffer[0] & 0x0F);
 		default: return 0;
 	}
 //	return 0;

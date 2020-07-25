@@ -44,7 +44,6 @@
 		uint8_t rBuf[REC_BUF_LEN];
 	} simple_uart_receiver_t;
 
-//	extern volatile simple_uart_receiver_t uart_receiver;
 
 //	extern char *uartCopyRecLine(char *buf, uint8_t *len);
 	#define uart_bytesAvailable		(uart_receiver.statusMask & uartBytesAvailable)

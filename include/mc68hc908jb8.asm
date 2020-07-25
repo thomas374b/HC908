@@ -19,7 +19,7 @@ FLASH_START		.EQU            $DC00
 FLASH_SIZE		.EQU            8192
 		#endif
 
-	#include	reg68hc908jb8.asm
+	#include	"reg68hc908jb8.asm"
 
 
 
@@ -64,7 +64,7 @@ fwLastAddr      .EQU      RAM_START + $0A
 fwDataBlock     .EQU      RAM_START + $0C
 
 
-	#include	macros.asm
+	#include	"macros.asm"
 
 	.macro	fw_delay
 		ldX		#{1}					;[2]

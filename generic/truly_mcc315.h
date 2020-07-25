@@ -4,14 +4,14 @@
  *  Created on: 21.06.2020
  *      Author: pantec
  *
- *   TRULY MCC315-A  TR-805 94V-0
+ *   Code for the LCD Display MCC315-A4 TR-805 94V-0 from TRULY
  *
  *   this is sort of a hd44780 "compatible" clone with SPI transport
  *   and a built-in 2x3 key-matrix
  *
- *   one line is shared between selection of a row and SPI slave select
+ *   one wire is shared between selection of a key-matrix-row and SPI slave select
  *
- *   the display is in nibble (4-bit) mode where the rs- and rw- signal is
+ *   the display is in nibble (4-bit) mode where the RS- and RW- signal is
  *   embedded in a prefixed start-byte
  *
  *   the data is LSB first
@@ -41,26 +41,26 @@ typedef enum {
 
 
 typedef enum {
-	symRotor0  = 0x01,					// @ cgram 0
-	symRotor1  = 0x02,
-	symRotor2  = 0x04,
-	symRotor3  = 0x08,
-	symRotor4  = 0x10,
+	symPie0  = 0x01,					// @ cgram 0
+	symPie1  = 0x02,
+	symPie2  = 0x04,
+	symPie3  = 0x08,
+	symPie4  = 0x10,
 
-	symRotor5  = 0x20 | 0x10,			// 0x10 @ cgram 1
+	symPie5  = 0x20 | 0x10,			// 0x10 @ cgram 1
 
-	symMenu	   = 0x40 | 0x01,			// 0x01 @ cgram 2
+	symMenu	 = 0x40 | 0x01,			// 0x01 @ cgram 2
 
-	symWarn	   = 0x60 | 0x10,			// 0x10 @ cgram 5
+	symWarn	 = 0x60 | 0x10,			// 0x10 @ cgram 5
 
-	symMoni	   = 0x80 | 0x04,			// 0x04 @ cgram 7
+	symMoni	 = 0x80 | 0x04,			// 0x04 @ cgram 7
 
-	symKey     = 0xA0 | 0x04,			// 0x04 @ cgram 9
+	symKey   = 0xA0 | 0x04,			// 0x04 @ cgram 9
 
-	symAC	   = 0xC0 | 0x10,			// 0x10 @ cgram 11
+	symAC	 = 0xC0 | 0x10,			// 0x10 @ cgram 11
 
-	symMASK	   = 0x1F,
-	symCache   = 0xE0,
+	symMASK	 = 0x1F,
+	symCache = 0xE0,
 } top_row_symbols_e;
 
 
@@ -81,8 +81,8 @@ typedef struct {
 
 
 
-// Client ändert Daten an der fallenden Flanke  =>  CPOL muß Null sein
-// damit die daten sicher gelesen werden muß cpha auch null sein
+// client changes data at falling edge  =>  CPOL must be zero
+// for stable reading CPHA has to be zero too
 //   #include this definition before spi.h, important !
 #define		SPI_CPOL_MODE		0
 #define		SPI_CPHA_MODE		0

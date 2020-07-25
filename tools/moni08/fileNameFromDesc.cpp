@@ -18,6 +18,14 @@
 
 #define MAX_STRLEN	128
 
+/**
+ * @return pointer to fileName string or NULL in case of error
+ * @param fd     unix file descriptor
+ * @param fileNameBuffer    location of caller-allocated memory
+ *
+ * The function works only on Linux since it uses special kernel 
+ * features from a mounted /proc filesystem
+ */
 char *fileNameFromDesc(int fd, char *fileNameBuffer)
 {
 	if (fileNameBuffer == NULL) {
@@ -26,7 +34,6 @@ char *fileNameFromDesc(int fd, char *fileNameBuffer)
 
     char proclnk[MAX_STRLEN];
 
-    int fno;
     ssize_t r;
 
     // test.txt created earlier
@@ -38,7 +45,7 @@ char *fileNameFromDesc(int fd, char *fileNameBuffer)
     }
     fileNameBuffer[r] = '\0';
 
-    printf("fp -> fno -> filename: %d -> %s\n", fd, fileNameBuffer);
+    printf("fd -> filename: %d -> %s\n", fd, fileNameBuffer);
 
     return fileNameBuffer;
 }

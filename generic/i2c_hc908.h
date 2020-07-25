@@ -37,7 +37,13 @@
 #define		I2C_SDAPIN			DEF_PTX(I2C_SDAPIN_CHAR, I2C_SDAPIN_NUM)
 
 
-extern  uint8_t i2c_data_buf[I2C_DTATBUF_LEN];
+typedef struct {
+	uint8_t	recv_error;
+	uint8_t buffer[I2C_DTATBUF_LEN];
+} i2c_data_t;
+
+extern 	i2c_data_t	i2c_data;
+
 
 //setup bit bang I2C pins
 inline void i2c_init()
@@ -283,14 +289,13 @@ uint8_t i2c_tx_byte_OK0(uint8_t val)
 }
 
 
-uint8_t i2c_recv_error;
 
 //read value from I2C, ack if last
 uint8_t i2c_rx_byte_noAckCheck()
 {
 	uint8_t i;
 	uint8_t val = 0;
-	i2c_recv_error = 0;
+	i2c_data.recv_error = 0;
 
 	let_sda_float();
 
@@ -301,7 +306,7 @@ uint8_t i2c_rx_byte_noAckCheck()
 	for(i=0; i<8; i++) {
 		if (check_scl_high() == 1) {
 			// timeout
-			i2c_recv_error = 1;
+			i2c_data.recv_error = 1;
 			return 0;
 		}
 

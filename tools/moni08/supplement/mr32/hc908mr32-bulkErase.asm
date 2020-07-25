@@ -14,7 +14,7 @@
 ;	declare_delay 4ms,13,252			; 9848 cycles, 4.007 ms
 	declare_delay 4ms,7,234				; 4928 cycles,
 
-	#include monitor-excerpts.asm
+	#include "monitor-excerpts.asm"
 
 MainStart:
 ;	store_reg	FLBPR, #$FF		; disable flash protection

@@ -11,12 +11,12 @@
 #ifdef GENERIC_CODE
 	#include "timer.h"
 		// must define
-		//		MS_TO_GAP(ms)
-		//		setup_gaptimer(gap)
-		//		gaptimer_expired()
-		//		uDelay150()
+		//		uint8_t MS_TO_GAP(ms)		// calculate milli-seconds to internal timer-ticks
+		//		setup_gaptimer(gap)			// prepare timing
+		//		bool gaptimer_expired()		// return true if timer expired
+		//		uDelay150()					// wait 150 µs
 		//		uDelay2000()
-		//		uDelay4500()
+		//		uDelay4500()				//	wait 4.5ms
 
 	#include "spi.h"
 		// must define
@@ -33,14 +33,13 @@
 #endif
 
 
-#include 	"crouzet_lcd_keybits.h"
+#include 	"keybits.h"
 
 #include 	"keyMatrix.h"
 
 
 #define		_displaycontrol		mcc315_data.displaycontrol
 #define		_displaymode		mcc315_data.displaymode
-// #define		_displayfunction	mcc315_data.displayfunction
 
 #define		_numlines 			4
 #define		CHARS_PER_ROW		12
@@ -151,17 +150,16 @@ uint8_t readDRAM(uint8_t addr)
 }
 
 
-/* TODO:
+/* TODO: implement busy-flag reading
 uint8_t readAddrBF()
 {
 	return transport(0, 1 , 0xFF);
 }
 */
 
-
-
-
-
+//
+// TODO: finalize implementation for sprite graphic chars
+//
 
 
 /*********** mid level commands, for sending data/cmds */
@@ -380,8 +378,6 @@ inline void mcc315lcd_init()
 	keymatrix_init();
 #endif
 
-//    _displayfunction |= lcd_2LINE;
-
 	mcc315lcd_command(lcd_FUNCTIONSET | lcd_8BITMODE);	// 0x30  wake-up
 	uDelay4500();  // wait more than 4.1ms
 
@@ -395,6 +391,10 @@ inline void mcc315lcd_init()
 
     mcc315lcd_standard();
 
+	_displaymode |= lcd_ENTRYLEFT;					// left to right
+	_displaymode &= ~lcd_ENTRYSHIFTINCREMENT;		// no autoscroll
+	mcc315lcd_command(lcd_ENTRYMODESET | _displaymode);
+
     // clear it off
     mcc315lcd_clear();
 
@@ -402,36 +402,7 @@ inline void mcc315lcd_init()
 
 
 #if 0
-	// WARNING: spi must be initialized before
-
-    // we start in 8bit mode
-    mcc315lcd_transport(0x30);
-    uDelay4500(); // wait min 4.1ms
-
-    mcc315lcd_transport(0x30);
-    uDelay4500(); // wait min 4.1ms
-
-    // third try
-    mcc315lcd_transport(0x30);
-    uDelay150(); // wait min 150µs
-
-    // finally, set to 4-bit interface
-    mcc315lcd_transport(0x20);
-
-
-    // this is according to the hitachi HD44780 datasheet
-    // page 45 figure 23
-
-    // Send function set command sequence
-    mcc315lcd_command(lcd_FUNCTIONSET | _displayfunction);
-    uDelay4500();  // wait more than 4.1ms
-
-    // second try
-    mcc315lcd_command(lcd_FUNCTIONSET | _displayfunction);
-    uDelay150();
-
-    // third go
-    mcc315lcd_command(lcd_FUNCTIONSET | _displayfunction);
+    // TODO: find codes for setting backlight and contrast for this display
 
 /*
     mcc315lcd_command(0x39); //function set
@@ -452,17 +423,6 @@ inline void mcc315lcd_init()
     mcc315lcd_command(0x0C); // display ON
     uDelay150();
 */
-
-    // finally, set # lines, font size, etc.
-    mcc315lcd_command(lcd_FUNCTIONSET | _displayfunction);
-
-    // turn the display on with no cursor or blinking default
-    _displaycontrol = lcd_DISPLAYON | lcd_CURSOROFF | lcd_BLINKOFF;
-    mcc315lcd_display();
-
-    // clear it off
-    mcc315lcd_clear();
-
     // Initialize to default text direction (for romance languages)
     _displaymode = lcd_ENTRYLEFT | lcd_ENTRYSHIFTDECREMENT;
     // set the entry mode
@@ -494,14 +454,18 @@ void mcc315lcd_setSymbol(top_row_symbols_e sym, top_row_attr_e attr)
 	} else {
 		mcc315_data.symbolCache[ci] &= ~flag;
 	}
+	mcc315lcd_command(0x3F);	// extended function set
+
 	mcc315lcd_writeSymbol(ci);
+
+	mcc315lcd_standard();		// return to standard function set
 }
 
 
 /**
- * set or clear any of the 6 rotary symbols via @param bitmask (0x3F)
+ * set or clear any of the 6 pie symbols via @param bitmask (0x3F)
  */
-void mcc315lcd_setRotor(uint8_t bitmask, top_row_attr_e blink)
+void mcc315lcd_setPie(uint8_t bitmask, top_row_attr_e blink)
 {
 	mcc315lcd_command(0x3F);	// extended function set
 
@@ -512,7 +476,7 @@ void mcc315lcd_setRotor(uint8_t bitmask, top_row_attr_e blink)
 	mcc315lcd_writeSymbol(0);
 
 	if (bitmask & 0x20) {
-		mcc315lcd_setSymbol(symRotor5, symON | blink);
+		mcc315lcd_setSymbol(symPie5, symON | blink);
 	} else {
 		mcc315_data.symbolCache[1] = 0;
 		mcc315lcd_writeSymbol(1);
@@ -522,8 +486,9 @@ void mcc315lcd_setRotor(uint8_t bitmask, top_row_attr_e blink)
 }
 
 /**
- * set the propeller symbol to an angle corresponding to param @count
- * there are 3 angles available, same count % 3 will return in same position (i.e. no move)
+ * animate a propeller blade consisting of to adjacent pie symbols to an angle
+ * corresponding to param @count, there are 3 angles available, same count % 3 will
+ * return in same position (i.e. no move)
  * if @param left is > 0 then the propeller animation rotates left otherwise right
  */
 void mcc315lcd_setPropeller(uint8_t count, uint8_t left)
@@ -536,18 +501,18 @@ void mcc315lcd_setPropeller(uint8_t count, uint8_t left)
 	}
 	switch(pi) {
 		case 0:
-			mcc315_data.symbolCache[0] = symRotor0 | symRotor3 | blink;
+			mcc315_data.symbolCache[0] = symPie0 | symPie3 | blink;
 			mcc315_data.symbolCache[1] = 0;
 			break;
 
 		case 1:
-			mcc315_data.symbolCache[0] = symRotor1 | symRotor4 | blink;
+			mcc315_data.symbolCache[0] = symPie1 | symPie4 | blink;
 			mcc315_data.symbolCache[1] = 0;
 			break;
 
 		case 2:
-			mcc315_data.symbolCache[0] = symRotor2 | blink;
-			mcc315_data.symbolCache[1] = symRotor5 | blink;
+			mcc315_data.symbolCache[0] = symPie2 | blink;
+			mcc315_data.symbolCache[1] = symPie5 | blink;
 			break;
 	}
 	mcc315lcd_command(0x3F);	// extended function set

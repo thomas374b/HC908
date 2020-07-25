@@ -118,7 +118,7 @@ bytes to read before continuing with the next command.
 Timeout to wait for the break signal from target. The target CPU should send a break signal after coming out of reset. 
 If it is missing the security bytes are sent by 
 .B moni08
-or if the key argument was missing the remaining commands are aborted.
+or if the key argument was missing and the timeout expires the remaining commands are aborted.
 .TP
 .B \fB\-\^m\fR \fI<address>\fR
 read content from memory location and write to stdout.
@@ -152,7 +152,8 @@ Power-On-Reset with wait. Pulls the DTR wire low, waits \fI<milli seconds>\fR to
 including key sending. Same as
 .PP
 -k \fI<keyfile>\fR -d \fI<serial_port>\fR -t 4 -g 2 -t 5 -w 200 -a \fI<ramstart>\fR -l \fI<hc906Variant>\fR-bootloader.bin
-.BR
+.PP
+ Values are taken from their defaults. Customize them with option \fI--saverc\fR.
 .TP
 .B \fB\-\^B\fR \fI<backup action mask>\fR
 Create a backup file after successfull flash programming.
@@ -233,6 +234,6 @@ cp(1), setserial(8), Motorola Application Note AN2317
 no bugs discovered
 .\"
 .SH AUTHOR
-Thomas Pantzer,,,, pantec@doha, 2020
+Thomas Pantzer, github@pantzer.net, 2020
 .\"
 .\"

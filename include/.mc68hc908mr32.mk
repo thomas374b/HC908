@@ -24,12 +24,9 @@ MHZ = 1
 
 # MHZ = 1.22875 # exact
 
-# MEM_MODEL = --model-large 
-# MEM_MODEL = --model-small 
-# --stack-auto
-
+MEM_MODEL = --model-large --stack-auto --idata-loc 0x68
+# MEM_MODEL = --model-small --idata-loc 0x68
 # MEM_MODEL = --stack-auto --stack-probe --int-long-rent --xram-loc 0x100 --xram-size 576
-MEM_MODEL = --model-large --stack-auto --idata-loc 0x68 
 
 # RAM_SIZE = 576
 # RAM_START = 0x100

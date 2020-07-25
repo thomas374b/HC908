@@ -11,6 +11,10 @@
 		.word	{2}
 	.endm
 
+	.macro	declare_byte
+		.ORG	{1}
+		.byte	{2}
+	.endm
 
 	.macro declare_var
 {1}			.EQU		next_var
@@ -61,7 +65,6 @@ _{3}off:
 _after{3}:
 	.endm
 
-
 	.macro busy_loop_delay
   			ldA	{1}				; [2]
 _L1_{2}:
@@ -72,8 +75,7 @@ _L1_{2}:
    		ldA.8  {1}                    ; .     $dc20   f6
    		and    {2}                 ; .0    $dc21   aa 30
    		stA.8  {1}                    ; .     $dc23   f7
-	.macro
-
+	.endm
 
 	.macro or_bits			        ;hfjdkghkd
    		ldA.8  {1}                    ; .     $dc20   f6

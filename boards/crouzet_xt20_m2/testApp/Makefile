@@ -31,7 +31,7 @@ GENERICS = board.h peripherie.h config.h \
 PROJECT_HDRS = myFeatures.h myTypes.h crouzet_lcd_keybits.h display.h compiler_lib.h
 
 # needed source files from the SDCC compiler libraries
-SDCC_DEPS = _mulint.c _divsint.c _modsint.c _moduint.c _divuint.c
+SDCC_DEPS = _mulint.c _divsint.c _modsint.c _moduint.c _divuint.c _mullong.c _divulong.c
 
 # list all sources to resolve dependencies
 DEPEND = $(GENERICS) $(PROJECT_HDRS) $(SDCC_DEPS)

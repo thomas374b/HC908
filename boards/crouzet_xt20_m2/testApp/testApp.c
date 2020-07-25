@@ -13,50 +13,40 @@
 #include "uart_printb.h"
 #include "uart_printh.h"
 
-#include "uart_hc908.h"
-
 #ifdef WITH_ADC_CHANNELS
 	#include "adc_hc908.h"
-
 	#include "sliding_int_avg.c"
-#endif
-
-#ifdef WITH_DIALOGS
-	#include "menu_dialogs.h"
 #endif
 
 #include "display.h"
 
+const static uint8_t _triSpaces[] = "   ";
+
+
+#ifdef WITH_DIALOGS
+	#include "menu_dialogs.h"
+	#include "menu_dialogs.c"
+#endif
+
+
+
 unsigned char _sdcc_external_startup()
 {
-        CONFIG1 |= 1;           // disable COP
+	CONFIG1 |= 1;           // disable COP
+	IMASK1 = 1;                     // disable external interrupts
+	BRKSCR = 0;                     // disable break interrupts
 
-        switch_to_pll_clock();
+	board_init();
 
-        IMASK1 = 1;                     // disable external interrupts
-        BRKSCR = 0;                     // disable break interrupts
-//      ADSCR = 0;                      // disable ADC interrupts
-
-//        TACH0IE = 0;                      // disable timer0 interrupts
-//        TACH1IE = 0;                      // disable timer1 interrupts
-//        TBCH0IE = 0;                      // disable timer0 interrupts
-//        TBCH1IE = 0;                      // disable timer1 interrupts
-
-
-        uart_init();
-        SCRIE = 1;		// enable receiver interrupts, must come after uart_init()
-
-        timer_init();
-#ifdef WITH_ADC_CHANNELS
-        adc_init();
-#endif
-        return 0;
+	return 0;
 }
 
-
+/*
 typedef enum {
 	menu_item_mask = 0x30,
 } menu_masks_e;
+*/
+
 
 
 #ifdef WITH_STACK_TEST
@@ -64,54 +54,10 @@ volatile __data uint8_t __at 0x80 stackTmpH;
 volatile __data uint8_t __at 0x81 stackTmpL;
 #endif
 
-			uint8_t					global_start_canary;
 
-volatile	timer_data_t 			timer_data;
+// const static char WelcomeMessage[] = "Hallo Thomas\n";
 
-volatile 	spi_receiver_data_t 	spi_receiver;
 
-volatile 	simple_uart_receiver_t	uart_receiver;
-
-#ifdef WITH_ADC_CHANNELS
-volatile 	average8_parms_t 		adc_data;
-#endif
-
-			timer_uint_t			timer0;
-			timer_uint_t			timer1;
-			uint8_t 				i2c_data_buf[I2C_DTATBUF_LEN];
-			keyMatrix_data_t 		keyData;
-			lcd_data_t 				mcc315_data;
-			uint8_t					spiData;
-			uint8_t					clockGood;
-			uint8_t 				loopCount;
-			uint8_t					inputFlags;
-			uint8_t					spiFlags;
-#ifdef WITH_STACK_TEST
-			uint16_t				stackLow;
-#endif
-			uint8_t					menuIdx;
-			uint8_t					menuChoose;
-
-//			sliding_avg_parms_t		timeAvg;
-//			uint8_t					strng[32];
-//			timer_uint_t			timeout2;
-//volatile	uint8_t					relay8_mask;
-
-			uint8_t					global_end_canary;
-
-/*
-#define GLOBAL_DATA_SIZE	(   2*sizeof(timer_uint_t) \
-								+ I2C_DTATBUF_LEN \
-								+ sizeof(timer_data_t) \
-								+ sizeof(average8_parms_t) \
-								+ sizeof(keyMatrix_data_t) \
-								+ sizeof(lcd_data_t) \
-								+ sizeof(spi_receiver_data_t) \
-								+ sizeof(simple_uart_receiver_t) \
-								+ 5 )
-
-//			+ sizeof(sliding_avg_parms_t)
-*/
 
 #ifdef WITH_STACK_TEST
 void testStack()
@@ -131,17 +77,10 @@ void testStack()
 }
 #endif
 
-#define GLOBAL_DATA_SIZE		(&global_end_canary - &global_start_canary)
 
 inline
 void setup()
 {
-	uint8_t *data = (uint8_t *)&timer0;
-	uint8_t i;
-	for (i=0; i<GLOBAL_DATA_SIZE; i++) {
-		data[i] = 0;
-	}
-
 #ifdef WITH_STACK_TEST
 	stackLow = 0x360;
 #endif
@@ -152,35 +91,25 @@ void setup()
 #if defined(SENDLED_MASK)
 	SENDLED_DDR |= SENDLED_MASK;
 #endif
-
-	board_init();
-
 	DDRC |= 0xFF;
 
 //	DDRA |= 0x01;
 //	DDRF |= 0x02;
 //	spiFlags = 0xFE;
-
-	__asm__("cli");
-
-    display_init();	// Timer and Interrupts must be running for this
-
 }
-
 
 // const uint8_t ports[6] = {PORTA, PORTB, PORTC, PORTD, PORTE, PORTF};
 
 
-
-
-
+#ifdef WITH_DISPLAY
 
 inline void keybAction()
 {
-	uart_putc('\t');
+	uart_putc('\n');
 	uint8_t last = keyData.pLast[keyData.page];
 	if (last & keyPress) {
 #ifdef WITH_DIALOGS
+/*
 		switch(menuIdx) {
 			case menu_idle:
 				menuIdx = menu_selection;
@@ -202,28 +131,14 @@ inline void keybAction()
 			case menu_set_relay_selection:
 				break;
 		}
+*/
 #endif
 		uart_putc('p');
 	} else {
 		if (last & keyRelease) {
 			last &= keyAllBits;
 #ifdef WITH_DIALOGS
-			switch(last) {
-				case keyPlus:
-				case keyMinus:
-					onOffAction(last);
-					break;
-
-				case keyA:
-				case keyB:
-					leftRightAction(last);
-					break;
-
-				case keyOK:
-				case keyEsc:
-					cancelOkAction(last);
-					break;
-			}
+			onOffSelection(last);
 #endif
 			uart_putc('r');
 		} else {
@@ -232,8 +147,10 @@ inline void keybAction()
 	uart_printh(last & keyAllBits);
 	uart_printh(menuIdx);
 	uart_printh(menuChoose);
-	uart_putc('\n');
 }
+
+#endif
+
 
 inline
 void trigger200action()
@@ -259,7 +176,7 @@ void trigger200action()
 inline
 void trigger1000action()
 {
-#ifdef WITH_I2C_CLOCK
+#ifdef WITH_M41T56_CLOCKCHIP
 	uint8_t i;
 	uint8_t r;
 #endif
@@ -324,46 +241,37 @@ void trigger1000action()
 		}
 #endif
 
+#ifdef WITH_DISPLAY
+#ifdef WITH_PIE_SECONDS_COUNTER
 		if (inputFlags > 0) {
-			mcc315lcd_setPropeller(loopCount, spiData);
+			mcc315lcd_setPropeller(loopCount, spiData); // rotor blade
 		} else {
-			mcc315lcd_setRotor(loopCount, spiData);
+			mcc315lcd_setPie(loopCount, spiData); // binary clock
 		}
 		loopCount++;
+#endif
+#endif
 
 		uart_putc('\t');
 		uart_printd(timer_data.now);
 
-
-
-/*	Compiler produziert Schund
-		timer_uint_t ms = TICKS_TO_MS(timer_data.now);
-		uart_printd(ms);
-
-		ms = timer_data.now;
-		ms *= TIMER_WRAP;
-		ms += TICKS_ROUNDUP;
-		ms /= OCR_TO_TICKS_DIV;
-		uart_printd(ms);
-
-		uart_printd(MS_TO_GAP(1000UL));
-		timer_int_t_ delta = (timer_int_t_)timer_data.now;
-		delta -= (timer_int_t_)timer1;
-		uart_printd(delta);
-*/
 		uart_printd(timer_data.wrap_count);
 
-#ifdef WITH_I2C_CLOCK
-		i = m41t56_read_wa(0, FIXED_I2C_DATA_LEN);
+#ifdef WITH_M41T56_CLOCKCHIP
 
+#ifdef WITH_DISPLAY
+		if (menu.currentIdx == menu_show_clock) {
+#endif
+
+		i = m41t56_read_wa(0, FIXED_I2C_DATA_LEN);
 		if (i == 0) {
 /*
 			for (i=0; i<FIXED_I2C_DATA_LEN; i++) {
 				uart_printh(i2c_data_buf[i]);
 			}
 */
-			if ((i2c_data_buf[0] & 0x80) > 0) {  // if clock is stopped
-				i2c_data_buf[0] &= ~0x80;		 // clear stop-bit
+			if ((i2c_data.buffer[0] & 0x80) > 0) {  // if clock is stopped
+				i2c_data.buffer[0] &= ~0x80;		 // clear stop-bit
 				m41t56_write(0, 1);
 			}
 			i = 0;
@@ -382,12 +290,14 @@ void trigger1000action()
 				}
 				i++;
 			} while ((r!= 0) && (i < 20));
-
+			mcc315lcd_writeString(&_triSpaces[0]);
 		} else {
 			uart_putc('c');
 			uart_printd(i);
 		}
-
+#ifdef WITH_DISPLAY
+		}
+#endif
 //		uart_printd(keyData.msk);
 //		uart_printd(keyData.cnt[0]);
 //		uart_printd(keyData.cnt[1]);
@@ -413,6 +323,23 @@ void trigger1000action()
 		uart_printb(spiData);
 		uart_printh(spiData);
 
+		for (i=0; i<4; i++) {
+//			uart_printd(i);
+			uart_printd(adc_data.avg[i].sum);
+#ifdef WITH_TRACE_MIN_MAX
+			uart_printd(adc_data.avg[i].max - adc_data.avg[i].min);
+#endif
+		}
+
+#ifdef WITH_TRACE_MIN_MAX
+		if ((loopCount & 0x03) == 0) {
+			for (i=0; i<4; i++) {
+				resetMinMax(&adc_data.avg[i]);
+			}
+		}
+#endif
+
+
 #ifdef WITH_STACK_TEST
 		testStack();
 
@@ -421,10 +348,6 @@ void trigger1000action()
 		uart_printhx(stackLow);
 #endif
 
-
-
-
-//
 //		uint8_t i;
 
 /*
@@ -506,6 +429,19 @@ void trigger1000action()
 */
 }
 
+
+#define TOGGLE_BIT(port, msk)	{ if ((port & msk) > 0) {	port &= ~msk; } else {	port |= msk; } }
+
+void toggle_relay(uint8_t i)
+{
+	if (i <= 5) {
+		TOGGLE_BIT(PWMOUT, 1 << i);
+	} else {
+		TOGGLE_BIT(PORTE, 1 << (i-6));
+	}
+}
+
+
 inline
 void uartAction()
 {
@@ -535,13 +471,7 @@ void uartAction()
 		case 'G':
 			rb -= 'A';
 			i = (1 << rb);
-			if ((PORTC & i) > 0) {
-				// switch off
-				PORTC &= ~i;
-			} else {
-				// switch on
-				PORTC |= i;
-			}
+			TOGGLE_BIT(PORTC, i);
 			break;
 /*
 		case 'F':
@@ -555,13 +485,20 @@ void uartAction()
 			break;
 */
 		case 'H':
-			if ((PORTA & 1) > 0) {
-				// switch off
-				PORTA &= ~0x01;
-			} else {
-				// switch on
-				PORTA |= 0x01;
-			}
+			TOGGLE_BIT(PORTA, 1);
+			break;
+
+		case 'e':
+		case 'f':
+		case 'g':
+		case 'h':
+		case 'i':
+		case 'j':
+		case 'k':
+		case 'l':
+			rb -= 'e';
+			toggle_relay(rb);
+			break;
 
 		case '0':
 		case '1':
@@ -573,18 +510,10 @@ void uartAction()
 		case '7':
 			rb -= '0';
 			i = (1 << rb);
-				if (inputFlags != 0) {
-				if (spiData & i) {
-					spiData &= ~i;
-				} else {
-					spiData |= i;
-				}
+			if (inputFlags != 0) {
+				TOGGLE_BIT(spiData, i);
 			} else {
-				if (spiFlags & i) {
-					spiFlags &= ~i;		// switch off
-				} else {
-					spiFlags |= i;		// switch on
-				}
+				TOGGLE_BIT(spiFlags, i);
 			}
 			break;
 
@@ -649,6 +578,9 @@ void uartAction()
 			mcc315lcd_command(0x38);
 			break;
 
+		case 'W':
+//			uart_puts(sizeof(WelcomeMessage)-1,(uint16_t)&WelcomeMessage);
+			break;
 /*
 		case 'R':
 			rb = 0xF8 | inputFlags | 0x02;
@@ -688,6 +620,22 @@ void uartAction()
 }
 
 
+// #define		SUM_TO_MVOLT(x)			((((x * V_ANALOG_REF) / 320UL) * R_LADDER_PRESCALER) / 100000UL)
+
+inline
+uint16_t sum_to_mVolt(uint16_t sum)
+{
+	uint32_t result = sum;
+
+	result *= V_ANALOG_REF;
+	result /= 320;
+	result *= R_LADDER_PRESCALER;
+	result /= 100000UL;
+
+	return result & 0xFFFF;
+}
+
+
 
 inline void loop()
 {
@@ -707,30 +655,61 @@ inline void loop()
 	if (uart_bytesAvailable) {
 		uartAction();
 	}
+
 #ifdef WITH_ADC_CHANNELS
 	if (AIEN == 0) {
 		// ADC has interrupt disabled, i.e. conversion is ready
 		i = adc_data.count >> 5;	// 32 counts make one measure before channel switching
-		intAverage(&adc_data.avg[i], adc_data.raw);
 
-		if (averageStabilizedEvent(&adc_data.avg[i], &adc_data.stabi[i])) {
-			// value @ channel i stabilized
-			uart_putc('\n');
-			uart_putc('a');
-			uart_printd(i);
-			uart_printd(adc_data.avg[i].sum);
-			uart_printd(AvgIntValue(adc_data.avg[i]));
-			uart_printd(Gradient(adc_data.avg[i]));
-			uart_putc('\n');
+		if ((adc_data.count & 0x1F) > 0) {
+			intAverage(&adc_data.avg[i], adc_data.raw);
+
+			if (averageStabilizedEvent(&adc_data.avg[i], &adc_data.stabi[i])) {
+				// value @ channel i stabilized
+
+				uart_printd(i);
+				uart_printd(sum_to_mVolt(adc_data.avg[i].sum));
+				uart_putc('m');
+				uart_putc('V');
+
+//				uart_printd(adc_data.count);
+//				uart_printd(adc_data.avg[i].sum);
+//				uart_printd(AvgIntValue(adc_data.avg[i]));
+//				uart_printd(Gradient(adc_data.avg[i]));
+//				uart_printd(adc_data.avg[i].accel);
+				uart_putc('\n');
+			}
+#ifdef WITH_TRACE_MIN_MAX
+			if (adc_data.stabi[i].isStable) {
+				int16_t mavg = adc_data.avg[i].gradient;
+				if (adc_data.avg[i].min > mavg) {
+					adc_data.avg[i].min = mavg;
+				}
+				if (adc_data.avg[i].max < mavg) {
+					adc_data.avg[i].max = mavg;
+				}
+			}
+#endif
 		}
+/*
+		uart_putc('a');
+		uart_printd(i);
+		uart_printd(adc_data.avg[i].sum);
+		//				uart_printd(AvgIntValue(adc_data.avg[i]));
+		uart_printd(Gradient(adc_data.avg[i]));
+		uart_printd(adc_data.avg[i].accel);
+		uart_putc('\n');
+*/
 
 		adc_data.count++;
 		adc_data.count &= 0x7F;
+/*
 
 		i = adc_data.count >> 5;	// 32 counts make one measure before channel switching
 		if (i > 1) {
 			i += 6;
 		}
+*/
 #if defined(SENDLED)
 		if (SENDLED > 0) {
 			SENDLED = 0;

@@ -11,7 +11,7 @@
 #include "project.h"
 
 
-extern volatile average8_parms_t adc_data;
+extern volatile average_parms_t adc_data;
 
 inline
 void adc_init()
@@ -28,8 +28,9 @@ void adc_init()
 #define		HAVE_ADC_ISR		1
 void adcIRQ(void) __interrupt(_isrNo_ADC) // __naked
 {
-	ADSCR &= ~((1 << 6) | (1 << 5));	// disable continuous conversion, interrupts
+//	ADSCR &= ~((1 << 6) | (1 << 5));	// disable continuous conversion, interrupts
 	adc_data.raw = ADR;
+	AIEN = 0;
 /*
 	__asm
 		lda			*_ADRL	 // dummy read to finish the job

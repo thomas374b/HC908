@@ -23,7 +23,7 @@ typedef struct {
 	uint8_t count;
 	sliding_avg_parms_t avg[4];
 	avg_stabilizer_t stabi[4];
-} average8_parms_t;
+} average_parms_t;
 
 
 #ifdef WITH_STACK_TEST

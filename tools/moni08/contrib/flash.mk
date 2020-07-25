@@ -48,16 +48,16 @@ FW_ERASE_ARGS = -Z -g $(ERASE_READY_GAP) -m $(FLASH_START)
 F_PROG_ARGS = -P $(POWER_ON_GAP) $(BULK_ERASE_ARGS) $(FLASH_ARGS)
 
 
-flash: $(CPU_VARIANT)-bootloader.bin $(TARGET)-final.s19 $(MONI_EXE)
-	$(MONI_08) -R -m $(FLASH_START) $(FLASH_ARGS) -m $(FLASH_START)
+flash: $(CPU_VARIANT)-bootloader.bin $(TARGET)-final.s19 $(MONI_EXE) .moni08rc
+	$(MONI_08) -P $(POWER_ON_GAP) -m $(FLASH_START) $(FLASH_ARGS) -m $(FLASH_START)
 
-erase: $(BULK_ERASE_LOADER) $(MONI_EXE)
+erase: $(BULK_ERASE_LOADER) $(MONI_EXE) .moni08rc
 	$(MONI_08) -k -1 -P $(POWER_ON_GAP) $(BULK_ERASE_ARGS)
 
-reflash: $(CPU_VARIANT)-bootloader.bin $(TARGET)-final.s19 $(MONI_EXE)
+reflash: $(CPU_VARIANT)-bootloader.bin $(TARGET)-final.s19 $(MONI_EXE)  .moni08rc
 	$(MONI_08) $(F_PROG_ARGS)
 
-run: $(TARGET).bin $(MONI_EXE)
+run: $(TARGET).bin $(MONI_EXE) .moni08rc
 	>$(MONI_08) -t 4 -g 3 -t 5 -a $(NATIVE_RAM_START) -l $(TARGET).bin --exec --tty
 
 hc908$(VARIANT)-bootloader.bin: $(REL_SUPPL)/hc908$(VARIANT)-bootloader.bin

@@ -109,12 +109,11 @@
 #define		FIXED_I2C_DATA_LEN			I2C_DTATBUF_LEN
 
 
+//#define		V_ANALOG_REF		4936		// mV  average
+#define		V_ANALOG_REF			4981		// mV		RMS
+#define		R_LADDER_PRESCALER		6198		// factor * 1000
 
-
-
-
-
-
+#define		SUM_TO_MVOLT(x)			((((x * V_ANALOG_REF) / 320UL) * R_LADDER_PRESCALER) / 100000UL)
 
 inline void switch_to_pll_clock()
 {
@@ -128,33 +127,65 @@ PLL_lock_wait:
     __endasm;
 }
 
+#ifdef WITH_HC08SPRG_BOOTLOADER
+
+#if 0		// hcs08prg BOOTLOADER RAM VARIABLES
+volatile __data uint16_t __at 0x60 ADRS;
+volatile __data  uint8_t __at 0x62 POM;
+volatile __data  uint8_t __at 0x63 LEN;
+volatile __data  uint8_t __at 0x64 STAT;
+volatile __data  uint8_t __at 0x65 STSRSR;
+volatile __data uint16_t __at 0x66 STACK;
+volatile __data uint16_t __at 0x68 SOURCE;
+#endif
+
+volatile __data  uint8_t __at 0x60 memPattern;
+volatile __data uint16_t __at 0x61 memAddr;
+volatile __data  uint8_t __at 0x63 uart_puts_len;
+
 typedef 	void (*funcPtr)(void);
 #define 	uart_init 	((funcPtr)0xFCAD)
 
 void uart_putc(uint8_t value)
 {
-	value;
+	value;		// implicit given in register 'a' by compiler
 	__asm
-;		lda value
 		jsr	0xFD11
 	__endasm;
 }
+
+void memset_asm(uint8_t len/*, uint16_t memAddr*/)
+{
+	len;		// implicit given in register 'a' by compiler
+//	memAddr;	// implicit given in register 'hx' by compiler
+	__asm
+		ldhx	_memAddr
+nextByte$:
+		mov		_memPattern,x+
+		dbnza	nextByte$
+	__endasm;
+}
+
+#define MEMSET(d,p,l)	{ memPattern = p; memAddr = d; memset_asm(l); }
+
+void uart_puts(uint8_t len, uint16_t strAddr)
+{
+	len;		// compiler puts this to register 'a'
+	strAddr;	// compiler puts this to register 'hx'
+	__asm
+		sta		_uart_puts_len
+		jsr		0xFCEF
+	__endasm;
+}
+
+//#define	UART_PUTS(l, addr)		{ uart_puts_len = l; uart_puts_asm(addr); }
+
 
 #if 0
 _VOLDATA _UINT8 __at 0x63 	uart_puts_len;
 
 // #define	uart_puts(x, y)		uart_puts_len = y; uart_puts_1(x);
 
-void uart_puts(uint8_t len, uint16_t strAddr)
-{
-	len;
-	strAddr;
-	uart_puts_len = len;
-	__asm
-		ldx		3,s
-		jsr		0xFD11
-	__endasm;
-}
 
 
 uint8_t uart_getc()
@@ -166,6 +197,8 @@ uint8_t uart_getc()
 	__endasm;
 	return result;
 }
+#endif
+
 #endif
 
 #ifdef WITH_COP_ENABLED
@@ -271,30 +304,73 @@ WriteSciLoop            .EQU    0xFCEF           ; Start address in HX, length i
 WriteSciLen                     .EQU    0x0063
 */
 
-#include "timer_hc908.h"
+#ifdef WITH_TIMER_SYSCLOCK
+	#include "timer_hc908.h"
+#endif
+
+#ifdef WITH_UART
+	#include "uart_hc908.h"
+#endif
+
+#ifdef WITH_M41T56_CLOCKCHIP
+	#include "m41t56.h"
+#endif
+
+#ifdef WITH_I2C_BITBANGING_BUS
+	#include "i2c_hc908.h"
+#endif
+
+#ifdef WITH_DISPLAY
+	#include "display.h"
+	#include "truly_mcc315.c"
+#endif
 
 #ifdef WITH_ADC_CHANNELS
 	#include "adc_hc908.h"
 #endif
 
-#include "i2c_hc908.h"
-#include "m41t56.h"
+#ifdef WITH_DIALOGS
+	#include "menu_dialogs.h"
+#endif
 
-#include "truly_mcc315.c"
-
-
+#include "globalVars.h"
+#include "globalVarSize.h"
 
 inline
 void board_init()
 {
-    POUTCTL = 1;	// PWM pins manual output control, relay 0..5
+#if F_CPU > 2000000UL
+	switch_to_pll_clock();
+#endif
 
+	MEMSET(GLOBAL_VARS_START, 0, sizeof(global_vars_t));
+
+#ifdef WITH_TIMER_SYSCLOCK
+	timer_init();
+#endif
 #ifdef WITH_MULTIPLE_I2C_CLIENTS
     i2c_init();
 #endif
-#ifdef WITH_I2C_CLOCK
+#ifdef WITH_M41T56_CLOCKCHIP
     m41t56_init();
 #endif
+#ifdef WITH_UART
+	uart_init();
+	SCRIE = 1;		// enable receiver interrupts, must come after uart_init()
+#endif
+#ifdef WITH_ADC_CHANNELS
+	adc_init();
+#endif
+#ifdef WITH_MANUAL_PWM_OUT
+    POUTCTL = 1;	// PWM pins manual output control, relay 0..5
+#endif
+
+    __asm__("cli");
+
+#ifdef WITH_DISPLAY
+    display_init();	// Timer and Interrupts must be running for this
+#endif
+
 }
 
 

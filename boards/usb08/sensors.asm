@@ -1,8 +1,10 @@
 
-WITH_TIMER_INT		.EQU	0
-WITH_LOOP_SAFETY	.EQU 	0
+		.TRACE off
 
-		.INCLUDE	board.asm
+WITH_TIMER_INT		.EQU	0
+WITH_LOOP_SAFETY	.EQU 	1
+
+		#include	"board.asm"
 
 
 RamBegin	.EQU $0041
@@ -66,14 +68,14 @@ RamEnd		.EQU lastVar
     .ORG  $dc00
 
 
-	.MACRO init_sadc
+	.macro init_sadc
 	; disable internal Pull-Ups on PTE                                                     
     ; POCR &= ~0x80;  // disable PTE20P   	
 		and_bits	POCR,#$7f
-	.ENDM                        ; .     $e13a   81
+	.endm                        ; .     $e13a   81
 
 
-	.MACRO config_hc08				; fklgjfldg
+	.macro config_hc08				; fklgjfldg
 	;disable COP, disable USB-reset
 		mov    #$21,CONFIG              ; ..    $dffa   b7 1f
 	; disable COP
@@ -85,9 +87,9 @@ RamEnd		.EQU lastVar
 	.ENDIF
 		init_sadc
     	or_bits DDRD,#$07			; init LED Output
-	.ENDM
+	.endm
 
-	.MACRO init_keyboard
+	.macro init_keyboard
 		or_bits	POCR,#$01
 		or_bits	PTA,#$70
 		or_bits	DDRA,#$70
@@ -95,26 +97,26 @@ RamEnd		.EQU lastVar
 		mov    #$70,KBIER               ; ..    $e0fb   b7 17
 		mov    #$04,KBSCR               ; ..    $e0ff   b7 16
 		clr 	KeyState
-	.ENDM
+	.endm
 
-	.MACRO init_leds		                       ; .     $e105   81
+	.macro init_leds		                       ; .     $e105   81
    		ldHX   #DDRD                ; E..   $e006   45 00 07
    		ldA    #$07                 ; ..    $e009   a6 07
    		orA   ,X                   ; .     $e00b   fa
    		stA   ,X                   ; .     $e00c   f7
-	.ENDM
+	.endm
 
-	.MACRO 	t_ha
+	.macro 	t_ha
 		pshH
 		pulA
-	.ENDM
+	.endm
 
-	.MACRO start_sadc
+	.macro start_sadc
 	and_bits	DDRD,#$87		;DDRD &= ~0x78;		// PTD[3..6] -> Input
 	and_bits DDRE,#$f8		;DDRE &= ~0x07;		// PTE[0..2] -> Input
 	and_bits PTD,#$87		;PTD &= ~0x78;
 	or_bits PTE,#$07			;PTE |= 0x07;
-	.ENDM
+	.endm
 
 
 _ResetEntry:
@@ -585,7 +587,7 @@ InitUSB:
 
 ;F_@df5e:
 ;ReadUSB:
-	.MACRO read_usb
+	.macro read_usb
 		pshX
 		pshH
 WaitReceived:
@@ -604,13 +606,13 @@ WaitReceived:
    		ldA.8   _v@0051,X             ; ..Q   $df6b   d6 00 51
 		pulH
 		pulX
-	.ENDM
+	.endm
 ;   rts                         ; .     $df7b   81 
 
 ;F_@df7c:
 ;WriteUSB:
 
-	.MACRO write_usb
+	.macro write_usb
 		pshH                        ; .     $df7c   87
    		pshX                        ; .     $df7d   89
    		pshA                        ; .     $df7e   87
@@ -642,7 +644,7 @@ WaitSended:
 		pulA		; increment Stack Pointer
 		pulX
 		pulH
-	.ENDM
+	.endm
 ;   rts                         ; .     $df9c   81 
 
 _USBISR:
@@ -696,20 +698,20 @@ _TimerOvrISR:
 _DummyISR:
 	rti                         ; .     $e000   80 
 
-	.MACRO inc_h		; comment
+	.macro inc_h		; comment
 		pshH                        ; .     $e020   8b
 		inc   1,SP              ; .l.   $e021   9e 6c 01
 		pulH                        ; .     $e024   8a
-	.ENDM
+	.endm
 
-	.MACRO add_hx	;	opr	; comment
+	.macro add_hx	;	opr	; comment
 		tXA
 		add		{1}
 		tAX
 		bhs _LaHX
 		incH
 _LaHX:
-	.ENDM
+	.endm
 
 MainEntry:
 	aiS    #$f3                 ; ..    $e001   a7 f3 
@@ -743,10 +745,10 @@ ReadUSBLoop:
 	ldA		#$1
 LEDLoop:
 	pshA
-	and		1,X				; 2,SP
+	and.w		1,X				; 2,SP
 	bne		ClearBit
-	ldA.8	PTD
-	orA		1,SP
+	ldA.b		PTD
+	orA.w		1,SP
 	bra 	SetBit
 ClearBit:
 	ldA.8	1,SP
@@ -782,7 +784,7 @@ _InBits:
 	lslA	
 	bra 	_InBits
 _OutBits:
-	stA		1,SP		; Number{0,1,2} -> Bit[0..2] stays pushed
+	stA.w		1,SP		; Number{0,1,2} -> Bit[0..2] stays pushed
 	
 ;	and		#2
 ;	bne		_channel1
@@ -888,23 +890,23 @@ SkipADC:
 ;~~~begin(CheckSum)~~~~~~~~~~~~~~~~~~~~~~~~~
 	clrA	
 	tSHX
-	movX+	Epoch		;1,SP
-	add		Epoch
+	movp		Epoch,X		;1,SP
+	add.w		Epoch
 	
-	movX+	KeyState	;2,SP
-	add		KeyState
+	movp		KeyState,X	;2,SP
+	add.w		KeyState
 	.IF WITH_TIMER_INT > 0
-		movX+	TimerOvf	;[SP,3]
-		add		TimerOvf
+		movp	TimerOvf,X	;[SP,3]
+		add.w		TimerOvf
 	.ELSE
-		movX+	channel
-		add		channel
+		movp	channel,X
+		add.w		channel
 	.ENDIF
 
-	add		,X			;[SP,4]
-	add		1,X			;5,SP
-	add		2,X			;6,SP
-	add		3,X			;7,SP
+	add.w	0,X			;[SP,4]
+	add.w	1,X			;5,SP
+	add.w	2,X			;6,SP
+	add.w	3,X			;7,SP
 	comA
 	stA.8	4,X			;[SP,8]
 ;___endof(CheckSum)_________________________
@@ -993,31 +995,31 @@ _KeyboardISR:
 	.ORG	$e263
 
 _DeviceDesc:	
-	.DC.b   	$12,$01,$10,$01,$00,$00,$00,$08,$70
-	.DC.b		$0c,$00,$00,$00,$01,$01,$02,$00,$01
+	DC.b   	$12,$01,$10,$01,$00,$00,$00,$08,$70
+	DC.b		$0c,$00,$00,$00,$01,$01,$02,$00,$01
 
 _ConfigDesc:
-	.DC.b		$09,$02,$20,$00,$01,$01,$00,$c0,$00
+	DC.b		$09,$02,$20,$00,$01,$01,$00,$c0,$00
 _IfaceDesc:
-	.DC.b		$09,$04,$00,$00,$02,$ff,$01,$ff,$00
+	DC.b		$09,$04,$00,$00,$02,$ff,$01,$ff,$00
 _EP0Desc:
-	.DC.b		$07,$05,$81,$03,$08,$00,$0a
+	DC.b		$07,$05,$81,$03,$08,$00,$0a
 _EP1Desc:
-	.DC.b		$07,$05,$02,$03,$08,$00,$0a
+	DC.b		$07,$05,$02,$03,$08,$00,$0a
 
 _Str0Desc:
-	.DC.b 	_Str1Desc - _Str0Desc,$03
-	.DC.b  	$09,$04
+	DC.b 	_Str1Desc - _Str0Desc,$03
+	DC.b  	$09,$04
 _Str1Desc:
-	.DC.b   	_Str2Desc - _Str1Desc,$03		; $28,$03
-	.DC.w		"MCT Electronikladen"
+	DC.b   	_Str2Desc - _Str1Desc,$03		; $28,$03
+	DC.s		"MCT Elektronikladen"
 _Str2Desc:
-	.DC.b		_StrTable - _Str2Desc,$03		; $2e,$03
-	.DC.w		"USB08 Evaluation Board"
+	DC.b		_StrTable - _Str2Desc,$03		; $2e,$03
+	DC.s		"USB08 Evaluation Board"
 _StrTable:
-_Str0Vec	.DC.w	_Str0Desc	; ..    $e2ef   e2 95
-_Str1Vec	.DC.w	_Str1Desc	; ..    $e2f1   e2 99
-_Str2Vec	.DC.w	_Str2Desc	; ..    $e2f3   e2 c1
+_Str0Vec	DC.w	_Str0Desc	; ..    $e2ef   e2 95
+_Str1Vec	DC.w	_Str1Desc	; ..    $e2f1   e2 99
+_Str2Vec	DC.w	_Str2Desc	; ..    $e2f3   e2 c1
 
 
 _vec1:		;     /* Keypad			   */

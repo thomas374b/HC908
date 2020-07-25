@@ -112,5 +112,9 @@ _divuint.c:
 _moduint.c:
 	ln -s $(SDCC_DIR)/src/device/lib/$@
 
-
+_mullong.c:
+	ln -s $(SDCC_DIR)/src/device/lib/$@
+	
+_divulong.c:
+	ln -s $(SDCC_DIR)/src/device/lib/$@
 

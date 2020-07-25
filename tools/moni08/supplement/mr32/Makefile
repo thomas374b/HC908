@@ -15,7 +15,7 @@ DEFINES += -DFLASH_SIZE=$(FLASH_SIZE)
 
 DEFINES += -DUSE_PLL_CLOCK=0 -DPLATFORM=0
 
-DASM_OPTS = -f3 -E2 -S -T1 -v2
+DASM_OPTS = -f3 -E2 -S -T1 -v2 	# 4 -d7
 
 DEPEND = board.asm macros.asm fancy_macros.asm bits68hc908.asm $(CPU).asm reg68hc908$(VARIANT).asm .CPU
 

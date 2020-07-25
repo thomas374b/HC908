@@ -7,8 +7,8 @@ key	lastflashed-key.s19
 toggle	4			#  dtr or rts wire		
 hash	31			#  mark printing on	
 gap	2			#  wait ms before continuing
-addr	96			#  base addres to start read/write
-need	768			#  bytes to read/write at least
+addr	64			#  base addres to start read/write
+need	256			#  bytes to read/write at least
 wait	20			#  ms until break received or exit
 value	128			#  read from memory location
 MHz	3			#  of system clock in target
