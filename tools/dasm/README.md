@@ -1,4 +1,6 @@
-I used the DASM assembler in all my HC908 projects. It can be found here https://github.com/dasm-assembler/dasm. Assembler source files may not be compatible with assemblers from other vendors. 
+I used the DASM assembler in all my HC908 projects. My changes to support the 68hc908 processors have been merged upstream already. It can be found here https://github.com/dasm-assembler/dasm. 
+
+Assembler source files may not be compatible with assemblers from other vendors. 
 
 I used to write mnemonics in camel-case. This is to get a better visual understanding 
 when a mnemonic states an implicit operand (register). So I choosed to write the 
