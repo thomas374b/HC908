@@ -1,29 +1,15 @@
-Here you find my patches to the famous DASM assembler version 2.20.14-SNAPSHOT.
-    https://github.com/dasm-assembler/dasm
+I used the DASM assembler in all my HC908 projects. My changes to support the 68hc908 processors have been merged upstream already. It can be found here https://github.com/dasm-assembler/dasm. 
 
-It consists of the following changes
+Assembler source files may not be compatible with assemblers from other vendors. 
 
-* support for mc68hc908 controller family
-* stack-pointer indexed address modi added
-* larger hash-table size to avoid clashes when assembling projects with lots of symbols
-* more strict checking of upper-/lowercase spelling to avoid clashes in symbols
-* allow at-sign (@) to apear in label names
-* allow '0x' prefixed hexadezimal notation, example '0x57' for '$57'  
-* 2 bug workarounds
+I used to write mnemonics in camel-case. This is to get a better visual understanding 
+when a mnemonic states an implicit operand (register). So I choosed to write the 
+operation lowercase and the operand in uppercase. It works well because DASM is case 
+insensitive but be aware of it when you state your own definitions.
 
-The mnemonics of the 68hc908 are written in camel-case (as I do in my code examples). 
-I wanted to have a better visual understanding when a mnemonic states an implicit
-operand (register). So I choosed to write the operation lowercase and the operand 
-in uppercase. 
+There are only two mnemonic-addressmode combinations that are not cleanly supported. 
+One has to use a special dasm syntax (forced address-mode extension) to trick dasm 
+to create the correct opcodes. But it doesn't harm if you don't. Only 1 byte extra 
+space would be needed, the semantic is kept the same. See test/suite68hc908.asm for 
+details.
 
-examples:
-    ldA	   #6	; load value 6 to register 'A'
-    stHX   5	; store content of register 'HX' to location @ address 5
-    pulA	; pull register A from stack
-
-Only two mnemonic-addressmode combinations are not yet implemented since it would require 
-more difficult chenges for the DASM engine. See test/suite68hc908.asm for details.
-
-
-You can find my forked version of dasm also on github 
-    https://github.com/thomas374b/dasm
