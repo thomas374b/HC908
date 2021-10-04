@@ -81,6 +81,10 @@ uart_printh.h:
 printd_type.h:
 	ln -s $(REL_INC)/generic/$@
 
+globalVarSize.h:
+	ln -s $(REL_INC)/generic/$@
+
+
 board.h:
 	ln -s ../$@
 
