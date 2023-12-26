@@ -1,7 +1,7 @@
 This is an unfinished project that serves as an example how to use the components 
 of the Crouzet XT20 SPS.
 
-In the currect state it
+In the current state it
 * shows the time of the internal nonvolatile CMOS clock on the display
 * reacts to some chars received from the serial line
 * outputs status of the input ports to the serial line
