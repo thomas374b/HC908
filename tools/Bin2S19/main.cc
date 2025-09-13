@@ -106,7 +106,7 @@ void check_hexnum_jump(int i, double f, char *fn)
 void makeRaw(void) 
 {
 	t_buffer FBuf;
-	char fn[256];
+	char fn[256+16];
 	sprintf(fn,"%s.s19",filename);
 
 	if (verbose_mode) {
@@ -183,7 +183,7 @@ void makeRaw(void)
 	
 	int Size = (highest - lowest);
 	if (Size > 0) {
-		char fn[256];
+		char fn[256+16];
 		sprintf(fn,"%s-0x%04X.bin",filename,lowest);
 		int fd = open(fn,O_RDWR|O_CREAT|O_TRUNC,0644);
 		if (fd > 0) {
