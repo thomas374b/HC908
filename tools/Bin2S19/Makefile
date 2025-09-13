@@ -114,8 +114,8 @@ endif
 endif	
 
 ifeq (_$(_GCC)_,__)
-# _GCC = g++
-_GCC = gcc
+_GCC = g++
+# _GCC = gcc
 endif
 
 CC	= $(CROSS)$(_GCC)
