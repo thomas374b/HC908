@@ -51,3 +51,4 @@ board.asm:
 
 
 
+include ../../contrib/flash.mk

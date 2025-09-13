@@ -29,8 +29,11 @@ include mklinks.mk
 $(TARGET)-final.s19: $(TARGET).bin
 	Bin2S19 -v -f $(TARGET).bin -c $(COLS) -b $(FLASH_END) $(VECTOR_MODE) -s >$(TARGET)-final.s19
 
-include flash.mk
-
 mklinks.mk:
 	ln -s ../mklinks.mk
+
+include flash.mk
+
+flash.mk:
+	ln -sf ../../../moni08/contrib/flash.mk
 

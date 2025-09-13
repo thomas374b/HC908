@@ -7,8 +7,5 @@ platform.asm:
 board.asm:
 	ln -sf $(REL_INC)/boards/$(BOARD)/board.asm .
 
-flash.mk:
-	ln -sf ../../../moni08/contrib/flash.mk
-
 .moni08rc:
 	ln -sf $(REL_INC)/boards/$(BOARD)/.moni08rc .

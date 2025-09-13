@@ -16,7 +16,7 @@ ifeq (_$(REL_INC)_,__)
 endif
 
 .CPU:
-	ln -s $(REL_INC)/include/.$(CPU).mk .CPU
+	cat $(REL_INC)/include/.$(CPU).mk >.CPU
 
 $(CPU).asm:
 	ln -s $(REL_INC)/include/$(CPU).asm .

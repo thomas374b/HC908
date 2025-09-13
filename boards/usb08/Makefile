@@ -50,3 +50,4 @@ $(TARGET)-final.s19: $(TARGET).bin
 	Bin2S19 -v -f $(TARGET).bin -c $(COLS) -b $(FLASH_START) $(VECTOR_MODE) -s >$(TARGET)-final.s19
 
 include flash.mk
+
