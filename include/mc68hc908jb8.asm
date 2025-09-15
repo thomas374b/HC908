@@ -51,7 +51,7 @@ HVEN		.EQU		$08
 ReadSerial	     	.EQU	$FC00
 FlashRead       	.EQU    $FC03
 FlashErase      	.EQU	$FC06
-FlashPro        	.EQU	$FC77	;	$FC09	; TODO: datasheet says fc09, where is fc77 coming from ? rev-engine ?
+FlashProg        	.EQU	$FC09	; from datasheet
 DelayUs         	.EQU	$FC0C	;
 
 WriteSerial	     	.EQU	$FED6

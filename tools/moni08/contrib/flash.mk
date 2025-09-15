@@ -45,11 +45,11 @@ endif
 REL_SUPPL = $(REL_MONI)/supplement/$(VARIANT)
 
 $(REL_SUPPL)/hc908$(VARIANT)-bootloader.bin:
-	( env -i bash -l -c "$(MAKE) -C $(REL_SUPPL)" )
+	( env bash -l -c "$(MAKE) -C $(REL_SUPPL)" )
 #	"env -i" ignores the old environment and any variables that might be already set by "make", "bash -l" creates a fresh environment with PATH etc.
 
 $(REL_SUPPL)/hc908$(VARIANT)-bulkErase.bin:
-	( env -i bash -l -c "$(MAKE) -C $(REL_SUPPL)" )
+	( env bash -l -c "$(MAKE) -C $(REL_SUPPL)" )
 
 $(REL_MONI)/built/$(UMA)/moni08:
 	( env bash -l -c "$(MAKE) -C $(REL_MONI)" )
