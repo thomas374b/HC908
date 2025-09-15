@@ -7,11 +7,13 @@
 
 			.PROCESSOR		68908
 
+
+		#include        "mc68hc908jb8.asm"
+		
 ;    #ifndef MC68HC908_MACROS_DEFINED
 		#include	"macros.asm"
 ;    #endif
 
-		#include	"reg68hc908jb8.asm"
 
 	.macro idents_
                 .byte     "JB8",0    	; soft SCI
@@ -49,26 +51,38 @@ SPEED           .EQU     6             ; specify Xtal clk in MHz if no calibrati
 
 CONFIG1			.EQU		CONFIG
 
-	#ifndef RAM_START
-RAM_START        	.EQU    	$40
+	#ifndef APPL_RAM_START
+		#if (USE_BOOTLOADER > 0)
+APPL_RAM_START        	.EQU    	$48		
+		#else	
+APPL_RAM_START        	.EQU    	$40
+		#endif
 	#endif
     
-	#ifndef RAM_SIZE
-RAM_SIZE		.EQU		256
+	#ifndef APPL_RAM_SIZE
+		#if (USE_BOOTLOADER > 0)
+APPL_RAM_SIZE		.EQU		248
+		#else		
+APPL_RAM_SIZE		.EQU		256
+		#endif
 	#endif
 
-FLASH_START		.EQU	    $DC00       ; flash Start for Jx3
 
-ROM_START     		.EQU    	$FC00		; Monitor
+	;  TODO: calculate bootloader size, subtract from highest flash address
+	#ifndef APPL_FLASH_END
+		#if (USE_BOOTLOADER > 0)
+APPL_FLASH_END		.EQU	 	 $FA00       ; this should be APL_VECT address (also from PRM file)
+		#else
+APPL_FLASH_END		.EQU	 	$10000       
+		#endif
+	#endif
 
-LOWEST_VECTOR_ADDR   	.EQU		$FFF0
 
-;  TODO: calculate bootloader size, subtract from highest flash address
-;	#ifndef FLASH_END
-;FLASH_END		.EQU	 	$FA00       ; this is APL_VECT address (also from PRM file)
-;	#endif
+FLASH_START			.EQU	    $DC00       ; flash Start for Jx3
+ROM_START     	.EQU    	$FC00		; Monitor
 
-FLBPRMASK       	.EQU     	$E000       ; this is CPU specific FLBPR mask (i.e. bits that are always in the address)
+
+FLBPRMASK       .EQU     	$E000       ; this is CPU specific FLBPR mask (i.e. bits that are always in the address)
 
 ERBLK_LEN	  		.EQU	 512
 WRBLK_LEN	    	.EQU	 64
@@ -78,3 +92,10 @@ WRBLK_LEN	    	.EQU	 64
 ;				.byte		$3B,{1},(. - {2})
 ;		.endm
 ;
+
+	
+			#include	"reg68hc908jb8.asm"
+			
+			
+			
+			

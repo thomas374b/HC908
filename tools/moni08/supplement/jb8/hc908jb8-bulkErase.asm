@@ -6,85 +6,104 @@
 	#include	"board.asm"
 	#include	"fancy_macros.asm"
 
-	.ORG		RAM_START
-	DC.b		0
 
-	declare_byte	fwCtrlByte, [1 << 6]
-	declare_byte	fwCpuSpeed, 12
-;	declare_byte	fwLastAddr, [$DC00 + 8192 -1]
-;	declare_byte	fwDataBlock, $db
+_ldProgStart	.EQU	  RAM_START + $06
 
-	.ORG	fwCtrlByte    
+	.ORG	RAM_START
+	.DS		6,$DC
 
-	.ORG		[fwDataBlock + 64]
+	.ORG	_ldProgStart
+	.word	FLASH_START
 
-	alignspace	Dummy, 8
+	.ORG	fwCtrlByte
+	.byte	[1 << 6]		; mass erase
+;	.byte	0
 
-	declare_delay	100us,1,98
+	.ORG	fwCpuSpeed
+	.byte	24
+
+	.ORG	fwLastAddr
+	.word	(FLASH_START+WRBLK_LEN)
+
+	.ORG	fwDataBlock
+	.DS		WRBLK_LEN,$FF
+	
 
 MainStart:
-    .IF	0
+	; move stackpointer to the end of physical RAM
+	ldHX	#StackPointer
+	tHXS
 
-        ldHX            #FLBPR                  ; need this address for mass erase
-        jsr             BulkErase
+	; enable LED output	
+	store_reg	DDRD,#(LED0|LED1|LED2)	
+	; lit one LED
+	store_reg	PTD,#LED0			
 
-        ldHX            #_vect_KBIR
-        jsr             BulkErase
-
-        ldHX            #FLASH_START
-        jsr             BulkErase
-
-	ldA		#"R"			; send ready signal
-	jsr		WriteSerial
-	
-	swi					; return to monitor mode
-	bra		MainStart
-
-BulkErase:
-	mov		#[1 << 6], fwCtrlByte
-	mov		#12, fwCpuSpeed
-	jsr		FlashErase
-	rts
-
-;MyBulkErase:
-    #else
 	store_reg	FLBPR, #0xFF
-	store_reg	FLCR, #[MASS|ERASE]
-	store_reg	$FFF0, #$0A		; need this address for mass erase
-	ldA		#4
-_shortDelay:
-	dbnzA		_shortDelay		;	[3] *5  15
-	set_bits	FLCR, HVEN
-	delay2ms
-	clear_bits	FLCR, ERASE
-	bsr		Delay100us
-	clear_bits	FLCR,HVEN
+	
+	mov	fwCtrlByte, #[1 << 6] 		; flag for mass erase
+;	mov	fwCpuSpeed, #24 					; 4*F_CPU MHz  ; patched from downloader
+		
+	ldHX	#_vect_TIM0
+	
+	jsr 	FlashErase
 
-	bsr		Delay100us
+  
+;  from datasheet
+; 1. Set both the ERASE bit and the MASS bit in the FLASH control register.
+; 2. Write any data to any FLASH address within the address range $FFE0-$FFFF.
+; 3. Wait for a time, tnvs (5 #s).
+; 4. Set the HVEN bit.
+; 5. Wait for a time t me (2 ms).
+; 6. Clear the ERASE bit.
+; 7. Wait for a time, tnvh1 (100 #s).
+; 8. Clear the HVEN bit.
+; 9. After time, t rcv (1 #s), the memory can be accessed in read mode	again
 
 	ldA		#"R"		; send ready signal
 	jsr		WriteSerial
+	    
+  bsr Delay250ms  
+
+	store_reg	PTD,#LED2	; lit the other LED
 
 	swi				; return to monitor mode
 	bra		MainStart
 
-    #endif
 
-;	rts
+Delay250ms:
+	pshA
+	ldA	#250
+d250loop:	
+	bsr	Delay1ms
+	dbnzA	d250loop			
+	pulA
+	rts	
+	
+Delay1ms:
+	pshA
+	pshX
+	; exact 1ms mit 6MHz Quarz => 3MHz Bustakt
+	ldX	#215
+	ldA	#4
+	bsr	WordDelay
+	pulX
+	pulA
+	rts	
+
+WordDelay:			
+	dbnzX	WordDelay			;	((3*X)+3)*A) +13	= 2605
+	dbnzA	WordDelay			;
+	rts
 
 
-; pieps wenn fertig
-;	store_reg	DDRD,#PTD3
-;ReadyLoop:						; [247]
-; 	store_reg	PTD,#PTD3
-; 	bsr			Delay100us
-; 	store_reg	PTD,#0			; [2+2]
-; 	bsr			Delay100us				; [17+]
-;	bra 		ReadyLoop		; [3]
-;
+	
+
 
 	.ORG		$FE
-StackPointer:
 	.word		MainStart
+
+	.ORG		[RAM_START+RAM_SIZE-2]
+StackPointer:
 
 

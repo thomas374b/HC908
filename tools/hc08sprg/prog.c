@@ -836,7 +836,7 @@
        
         if (id == 0)   
         {   
-            scannm = image.d+s+4;   /* string ptr. after ID$ */   
+            scannm = (char*)(image.d+s+4);   /* string ptr. after ID$ */
        
             printf("\r\nMCU software version: ");   
             cleanprint(scannm);   

@@ -19,9 +19,6 @@ FLASH_START		.EQU            $DC00
 FLASH_SIZE		.EQU            8192
 		#endif
 
-	#include	"reg68hc908jb8.asm"
-
-
 
 PTE0	.EQU	(1 << 0)
 PTE1	.EQU	(1 << 1)

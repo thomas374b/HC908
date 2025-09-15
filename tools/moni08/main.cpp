@@ -108,7 +108,7 @@ extern void jump_function(int i, double f, char *s);
 extern void por_function(int i, double f, char *s);
 
 extern void cpu_function(int i, double f, char *s);
-
+extern void writeVar_function(int i, double f, char *s);
 
 void exit_proc(int result, bool restore=true)
 {
@@ -200,6 +200,11 @@ t_opts opts[] = {
 #define CPU_VARIANT		opts[17].i
 
 	{erase_function, e_boolean,'Z',"zap","mass erase flash memory\t\0",false,128, 0.0, ""},
+#define	IS_ERASE_ACTION		opts[18].b
+
+	{writeVar_function, e_integer,'p',"poke","write to memory location\0",false, 0x80, 0.0, ""},
+//#define	WRITE_VAR_ADDR	opts[19].i	// in milliseconds
+
 	{flashProg_function, e_string, 'f',"flash","s19 file to target eeprom\0",false, 0, 0.0, "target.s19\0"},
 
 	{tty_function, e_boolean,'T',"tty","serial terminal IO with device\0",false,128, 0.0, ""},
@@ -209,6 +214,7 @@ t_opts opts[] = {
 
 	{exec_function, e_boolean,'e',"exec","fetch vector from SP and run\0",false,0,0.0,""},
 	{SP_function, e_boolean,'s',"stack","pointer read\t\t\0",false,0,0.0,""},
+
 
 
 // TODO:
@@ -885,8 +891,14 @@ bool write_flash_fw(mc86hc908_variants_e idx, int MHz, uint16_t startAddr, int l
 		fprintf(stderr,"read address 0x%04X failed\n",fwAddr->jumpAddr-2);
 		return false;
 	} else {
+//		if (verbose_mode) {
+//			fprintf(stderr,"got magic [%02x] from CPU\n", magic);
+//		}
 		if (magic == fwAddr->HX) {
-			// monitor is probably present
+//			if (verbose_mode) {
+//				fprintf(stderr,"magic matches [%02x], monitor is probably present\n", fwAddr->HX);
+//			}
+			//
 		} else {
 			if (verbose_mode) {
 				fprintf(stderr,"reload bootloader on-the-fly\n");
@@ -902,8 +914,8 @@ bool write_flash_fw(mc86hc908_variants_e idx, int MHz, uint16_t startAddr, int l
 	if (!doErase) {
 // #ifdef STRICT_FLASH_ADDRESS
 		if (((startAddr & 0xFF) + len) > 256) {
-			fprintf(stderr,"start-address + length 0x%04X crosses 256 byte boundary to 0x%04X, arg:0x%04X, align your S19 file properly\n"
-					,startAddr, startAddr+len, ((startAddr & 0xFF) + len));
+			fprintf(stderr,"start-address(0x%04X) + length(%d)  crosses 256 byte boundary to 0x%04X, arg:0x%04X, align your S19 file properly\n"
+					,startAddr, len, startAddr+len, ((startAddr & 0xFF) + len));
 			return false;
 		}
 // #endif
@@ -944,10 +956,16 @@ bool write_flash_fw(mc86hc908_variants_e idx, int MHz, uint16_t startAddr, int l
 			fprintf(stderr,"setting CtrlByte failed\n");
 			return false;
 		}
+		if (verbose_mode) {
+			fprintf(stderr,"CtrlByte[0x%04x] poked to [0x%04x] in monitor RAM",fwAddr->CtrlByte,(1<<6));
+		}
 		// poke flash erase address
 		if (!monitor_poke_word(fwAddr->jumpAddr, fwAddr->erase)) {
 			fprintf(stderr,"setting jump address to erase failed\n");
 			return false;
+		}
+		if (verbose_mode) {
+			fprintf(stderr,"jumpAddr[0x%04x] poked to [0x%04x] in monitor RAM",fwAddr->jumpAddr, fwAddr->erase);
 		}
 	}
 
@@ -995,6 +1013,7 @@ bool write_flash_fw(mc86hc908_variants_e idx, int MHz, uint16_t startAddr, int l
 		fprintf(stderr,"setting last-address failed\n");
 		return false;
 	}
+
 	if (!monitor_poke_byte(fwAddr->cpuSpeed, MHz*4)) {
 		fprintf(stderr,"setting CPU-speed failed\n");
 		return false;
@@ -1646,14 +1665,14 @@ void erase_function(int i, double f, char *s)
 	if (SFD < 0) {
 		minimal_open();
 	}
-
+/*
 	// upload flash-program-helper
 	if (needBootLoader) {
 		if (!write_bootLoader(CPU_VARIANT)) {
 			return;
 		}
 	}
-
+*/
 	if (!write_flash_fw((mc86hc908_variants_e)CPU_VARIANT, CPU_MHZ, 0, -1, NULL)) {
 		fprintf(stderr, "flash erase failed\n");
 	}
@@ -1758,6 +1777,26 @@ void read_monitor_function(int i, double f, char *s)
 	}
 	if (!read_ram(s, RAM_OFFS, iNeedbytes)) {
 		exit_proc(2);
+	}
+}
+
+
+void writeVar_function(int i, double f, char *s)
+{
+	// must "peek" before "poke" because we are using same address variable READ_VAR_ADDR
+	bool result = false;
+	if (abs(i) > 255) {
+		result = monitor_poke_word(READ_VAR_ADDR, i);
+	} else {
+		result = monitor_poke_byte(READ_VAR_ADDR, (uint8_t)i);
+	}
+	if (!result) {
+		fprintf(stderr, "missed poke 0x%02X to MEM[0x%04X]\n", i, READ_VAR_ADDR);
+	}
+	if (verbose_mode) {
+		if (result) {
+			fprintf(stderr, "poked MEM[0x%04X] := 0x%02X\n", READ_VAR_ADDR, i);
+		}
 	}
 }
 

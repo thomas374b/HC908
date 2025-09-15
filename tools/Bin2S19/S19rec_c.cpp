@@ -414,6 +414,9 @@ t_s19Line *C_S19rec::Filled(char *Line, t_s19Line *tmpLine, uint8_t *chkSum)
 					case '3':
 						tmpLine->ID = Test[1];
 						addrBits = Test[1]+2-'1';
+#ifdef WUTH_DEBUG_
+						fprintf(stderr,"recognizing %d address bits\n",addrBits );
+#endif
 						break;
 
 					case '0': 	// Preambel
@@ -451,23 +454,25 @@ t_s19Line *C_S19rec::Filled(char *Line, t_s19Line *tmpLine, uint8_t *chkSum)
 				break;
 #endif
 
-			default: // Bytes
+			default: // Bytes (4+2)==6
 				if (i < (4 + addrBits)) {
-					uint8_t byte = Hex2Byte(Test);
-					*chkSum += byte;
+					uint8_t byte = 0;
 
-					tmpLine->Addr <<= 8;
-					tmpLine->Addr |= byte;
+					uint8_t sk = addrBits;
+					uint8_t so = 0;
+					while (sk > 0) {
+						byte = Hex2Byte(&Test[so]);
+						*chkSum += byte;
 
-					lastByte = byte = Hex2Byte(&Test[2]);
-					*chkSum += byte;
-
-					tmpLine->Addr <<= 8;
-					tmpLine->Addr |= byte;
+						tmpLine->Addr <<= 8;
+						tmpLine->Addr |= byte;
 #ifdef WUTH_DEBUG_
-					fprintf(stderr,"	i:%d, b:%02x, a:%X, ab:%d\n", i, byte, tmpLine->Addr, addrBits);
+						fprintf(stderr,"	i:%d, b:%02x, a:%X, ab:%d, k:%d, o:%d\n", i, byte, tmpLine->Addr, addrBits, sk, so);
 #endif
-					i += 2;
+						so += 2;
+						sk--;
+						i++;
+					}
 				} else {
 					lastByte = tmpLine->buffer[k] = Hex2Byte(Test);
 					*chkSum += tmpLine->buffer[k];

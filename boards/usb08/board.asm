@@ -1,6 +1,8 @@
 
 
-		#include        "mc68hc908jb8.asm"
+
+		#include	"platform.asm"
+		
 
 		#if	(START < [RAM_START+RAM_SIZE])
 ; probably running rom RAM in monitor mode
@@ -38,4 +40,4 @@ KEY2	.EQU	PTA6
 USB_DP	.EQU	PTE3
 USB_DM	.EQU	PTE4
 
-		#include	"platform.asm"
+

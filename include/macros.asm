@@ -30,10 +30,10 @@ next_var	.set		({1}+{2})
 
 	.macro	store_reg
 		#if ({1} > 255)
-			ldA     {2}		;[2]
-			stA		{1}		;[3]
+			ldA	{2}		;[2]
+			stA	{1}		;[3]
 		#else
-			mov 	{2},{1}
+			mov 	{1},{2}		; dest, src
 		#endif
 	.endm
 

@@ -214,14 +214,14 @@ next_var		.set		RAM_START
 ;		.DS			(RAM_START+RAM_SIZE),0xa0
 ;*******************************************************************************************
 
-			.ORG		FLASH_END			; should be section modulo erase page minus 32
+		.ORG		(FLASH_END)			; should be section modulo erase page minus 32
 APL_VECT:
 
-PRI:							 ; address of onebit-ticks default value
-		.word    SCITXTICK
-        .word    0
-        .word    0
-        .word    0
+PRI:
+	.word	SCITXTICK
+	.word	0
+	.word	0
+	.word	0
 
 VEC0:   jmp     main            ; vector 0		; RESET ist not an interrupt
 VEC1:   jmp     main            ; vector 1
@@ -231,11 +231,6 @@ VEC4:   jmp     main            ; vector 4
 VEC5:   jmp     main            ; vector 5
 VEC6:   jmp     main            ; vector 6
 VEC7:   jmp     main            ; vector 7
-
-; 		.ORG	FLASH_END					; must align to page erase size
-;		#if (. - $FA00)
-;			.ERROR "not aligned"
-;		#endif
 
 ;******************************************************************************************* 
 main:     

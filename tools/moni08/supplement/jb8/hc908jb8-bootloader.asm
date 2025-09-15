@@ -26,10 +26,10 @@ _ldProgStart	.EQU	  RAM_START + $06
 	.byte	8
 
 	.ORG	fwLastAddr
-	.word	(FLASH_START+64)
+	.word	(FLASH_START + WRBLK_LEN)
 
 	.ORG	fwDataBlock
-	.DS		64,$FF
+	.DS		WRBLK_LEN,$FF
 
 ;	.ORG	$D0
 
@@ -38,6 +38,9 @@ MainStart:
 MainLoop:
 	ldHX	_ldProgStart
 	jsr		FlashProg
+
+	; unprotect all regions of flash memory for erase and programming
+	store_reg FLBPR,#0xFF
 
 	inc		fwLastAddr+1	; count the low-byte one up
 	ldHX	_ldProgStart

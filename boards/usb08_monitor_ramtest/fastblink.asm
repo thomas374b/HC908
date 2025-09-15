@@ -5,23 +5,25 @@
 ; *      Author: pantec
 ; */
 
+
+
+
 	#include	"board.asm"
 
 ;	#include	"macros.asm"
+
+	#ifndef		START
+START			.EQU	FLASH_START
+	#endif
+
+TARGET_IS_RAM	.EQU	(START < [RAM_START+RAM_SIZE])
 
 
 ; EQU and Labels _must_ start @ begin of line
 OCR1A_MAX_VAL		.EQU	32768
 
 
-	#ifndef		START
-START			.EQU	FLASH_START
-	#endif
-
-
-TARGET_IS_RAM	.EQU	(START < [RAM_START+RAM_SIZE])
-
-next_var	.set	RAM_START
+next_var	.set	APPL_RAM_START
 
 		declare_var		TIMER_WRAPS,1
 		declare_var		delayWait,2
@@ -36,14 +38,33 @@ next_var	.set	RAM_START
 	#endif
 
 
-	#if TARGET_IS_RAM
-	#else
-	#endif
 
-WordDelay:			; max 26.4ms @ 7.3 MHz
-	dbnzA	WordDelay			;	((3*A)+3)*X) +13
-	dbnzX	WordDelay			;
+WordDelay:			
+	dbnzX	WordDelay			;	((3*X)+3)*A) +13	= 2605
+	dbnzA	WordDelay			;
 	rts
+
+	
+Delay1ms:
+	pshA
+	pshX
+	; exact 1ms mit 6MHz Quarz => 3MHz Bustakt
+	ldX	#215
+	ldA	#4
+	bsr	WordDelay
+	pulX
+	pulA
+	rts	
+
+
+Delay250ms:
+	pshA
+	ldA	#250
+d250loop:	
+	bsr	Delay1ms
+	dbnzA	d250loop			
+	pulA
+	rts	
 
 
 LedCounter:
@@ -55,19 +76,21 @@ LedCounter:
 	
 
 MainEntry:
-	#if TARGET_IS_RAM
-	#else
-		ldA		#0xFF
-		stA		COPCTL
-	  mov     #%10000001,CONFIG      ; COP disable
-	#endif
-	
 	ldHX	#[RAM_START+RAM_SIZE-1]
 	tHXS
+	
+	
+	#if TARGET_IS_RAM
+	#else
+;		ldA		#0xFF
+;		stA		COPCTL
+;	  mov     #%10000001,CONFIG      ; COP disable
+	#endif
+
 
 	ldA		#7
 	stA		DDRD		; enable LED ports as output
-  bset	1,DDRC
+  bset	0,DDRC
   bset	7,DDRA
 
 	#if				TARGET_IS_RAM
@@ -96,7 +119,7 @@ MainEntry:
 		store_reg		TSC, #$46			; TOIE & prescaler 1/64
 		bclr			5,TSC						; clear TSTOP	; clock enabled
 
-		cli								; interrupts enabled
+;		cli								; interrupts enabled
 
 ;		store_reg		DDRF,#[[1<<0] | [1 << 2]]		; pins output
 
@@ -106,18 +129,24 @@ MainEntry:
 
 MainLoop:
 	shake_pin	0,PTC,LEDC
-
+  
 	#if	TARGET_IS_RAM
-		shake_pin	7,PTA,LEDA
-		jsr LedCounter
-		
-		ldHX	#0xF000
+		shake_pin	7,PTA,LEDA		
 	#else
-		ldHX	delayWait
+;		ldHX	delayWait
 	#endif
-	
-	jsr	WordDelay
 
+	bsr LedCounter
+	
+	bsr Delay250ms
+
+	
+;	pshA	
+;	beq _skip
+	
+_skip:
+;	pulA
+	
 ;	stA		COPCTL
 ;	pshH
 ;	pulA
@@ -128,7 +157,6 @@ MainLoop:
 ;	pshA
 ;	pulA
 ;	stHX	delayWait
-
 
 	bra MainLoop
 
