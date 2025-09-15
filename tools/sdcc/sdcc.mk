@@ -12,7 +12,7 @@ AS  = $(SDCC_BIN)/sdas6808
 CPP = $(SDCC_BIN)/sdcpp
 LNK = $(SDCC_BIN)/sdld6808
 
-CPPFLAGS = -I. -I$(INCLUDE_DIR)
+CPPFLAGS = -I. -I$(INCLUDE_DIR) -DVARIANT=\"$(VARIANT)\"
 
 OPTS += --nooverlay         #  Disable overlaying leaf function auto variables
 OPTS += --nogcse            #  Disable the GCSE optimisation
@@ -68,7 +68,7 @@ sdcc_clean:
 	@echo Deleting all object, and list files...
 	rm -f *.a08 *.rel *.lst *.lk *.mem *.cdb *.rst *.sym $(TARGET)-final.s19 $(TARGET)-$(FLASH_START).bin $(TARGET).asm $(TARGET).elf *.map.
 
-# rules to show RAM and FLASH usage of the neww build
+# rules to show RAM and FLASH usage of the new build
 $(TARGET).map: $(TARGET).rel
 
 ifeq (_$(USED_RAM)_,__)

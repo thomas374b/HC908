@@ -85,7 +85,6 @@ static uint8_t _SKEY_BYTES[N_MAX_SECURITY_BYTES];
 
 #define 	WITH_DEBUG		1
 
-
 extern void open_function(int i, double f, char *s);
 extern void stop_function(int i, double f, char *s);
 extern void parity_function(int i, double f, char *s);
@@ -108,6 +107,7 @@ extern void erase_function(int i, double f, char *s);
 extern void jump_function(int i, double f, char *s);
 extern void por_function(int i, double f, char *s);
 
+extern void cpu_function(int i, double f, char *s);
 
 
 void exit_proc(int result, bool restore=true)
@@ -180,8 +180,8 @@ t_opts opts[] = {
 	{empty_func,e_integer,'M',"MHz","of system clock in target\0",false, 2, 0.0, ""},
 #define CPU_MHZ			opts[11].i
 
-	{empty_func,e_integer,'c',"cpu","variant in target\t\0",false, 1, 0.0, ""},
-#define CPU_VARIANT		opts[12].i
+	{cpu_function,e_string,'c',"cpu","variant-name in target\t\0",false, 1, 0.0, "hc908jb8"},
+#define	CPU_VARIANT_NAME	opts[12].s
 
 	{reset_function, e_boolean,'R',"reset","device and write bootloader\0",false,128, 0.0, ""},
 // #define GOT_RESET_ARG		opts[13].b
@@ -196,6 +196,9 @@ t_opts opts[] = {
 	{empty_func,e_integer,'B',"backup","file creation mask {1,2,4}\0",false, 3, 0.0, ""},
 #define BACKUP_FC_MASK		opts[16].i
 
+	{cpu_function,e_integer,'C',"CPU","variant-index in target\t\0",false, 2, 0.0, ""},
+#define CPU_VARIANT		opts[17].i
+
 	{erase_function, e_boolean,'Z',"zap","mass erase flash memory\t\0",false,128, 0.0, ""},
 	{flashProg_function, e_string, 'f',"flash","s19 file to target eeprom\0",false, 0, 0.0, "target.s19\0"},
 
@@ -206,7 +209,6 @@ t_opts opts[] = {
 
 	{exec_function, e_boolean,'e',"exec","fetch vector from SP and run\0",false,0,0.0,""},
 	{SP_function, e_boolean,'s',"stack","pointer read\t\t\0",false,0,0.0,""},
-
 
 
 // TODO:
@@ -265,6 +267,7 @@ t_opts opts[] = {
 };
 
 
+// #define	WITH_DEBUG_	1
 
 
 bool serial_config_globals()
@@ -311,7 +314,30 @@ bool serial_config_globals()
 			serial_config_globals();\
 		}
 
-
+void cpu_function(int i, double f, char *s)
+{
+    if (s != NULL) {
+	if (strlen(s)>0) {
+	    for (uint8_t j=0; j<sizeof(cpu_firmware_addr)/sizeof(cpu_firmware_addr_t); j++) {
+		if (strcmp(s, cpu_firmware_addr[j].variantStr) == 0) {
+		    CPU_VARIANT = cpu_firmware_addr[j].idx;
+		    iNeedbytes	= cpu_firmware_addr[j].ramSize;
+		    RAM_OFFS = cpu_firmware_addr[j].ramStart;
+		    fprintf(stderr,"cpu variant set to index [%d] from string arg\n", CPU_VARIANT);
+		    return;
+		}
+	    }
+	}
+    }
+    if ((unsigned)i<sizeof(cpu_firmware_addr)/sizeof(cpu_firmware_addr_t)) {
+	strcpy(CPU_VARIANT_NAME, cpu_firmware_addr[i].variantStr);
+	iNeedbytes = cpu_firmware_addr[i].ramSize;
+	RAM_OFFS = cpu_firmware_addr[i].ramStart;
+	fprintf(stderr,"cpu variant set to index [%d] from int arg\n", CPU_VARIANT);
+	return;
+    }
+    fprintf(stderr,"argument --cpu ignored using type [%d]\n", CPU_VARIANT);
+}
 
 
 void prefix_function(int i, double f, char *s)
@@ -619,7 +645,7 @@ bool monitor_raw_cmd(hc908_monitor_indices_e idx, uint8_t *_DataBuf)
 				}
 
 #ifdef WITH_DEBUG_
-				fprintf(stderr,"read() rbuf[%d]:=x%02X\n", ir, rbuf[ir]);
+				fprintf(stderr,"read() rbuf[%d]:=x%02X\n", ir, serial_buf[ir]);
 #endif
 				ir++;
 
@@ -631,7 +657,7 @@ bool monitor_raw_cmd(hc908_monitor_indices_e idx, uint8_t *_DataBuf)
 		}
 #ifdef WITH_DEBUG_
 		if (verbose_mode) {
-			fprintf(stderr,"%d, %d 0x%02X  0x%02x, 0x%02x\n", is, ir, monitor->cmd, sbuf[is], rbuf[ir]);
+			fprintf(stderr,"%d, %d 0x%02X  0x%02x, 0x%02x\n", is, ir, monitor->cmd, sbuf[is], serial_buf[ir]);
 		}
 #endif
 	}
@@ -981,11 +1007,11 @@ bool write_flash_fw(mc86hc908_variants_e idx, int MHz, uint16_t startAddr, int l
 		fprintf(stderr,"unprotect flash failed\n");
 		return false;
 	}
-#ifdef WITH_DEBUG_
+//#ifdef WITH_DEBUG_
 	if (verbose_mode) {
 		fprintf(stderr,"executing bootloader in RAM\n");
 	}
-#endif
+//#endif
 	uint8_t rBuf[32*1024];
 
 	if (! monitor_raw_cmd(eExec, rBuf)) {
@@ -1270,7 +1296,7 @@ bool flash_s19_file(char *s19FileName, int cpuIdx, int MHz)
 
 		if (got != NULL) {
 #ifdef WITH_DEBUG_
-			fprintf(stderr,"got.addr:%ld, got.buffer:%ld, got.Len:%ld\n",got->Addr, (long)&got->buffer[0], got->Len);
+//			fprintf(stderr,"got.addr:%ld, got.buffer:%ld, got.Len:%ld\n",got->Addr, (long)&got->buffer[0], got->Len);
 #endif
 			switch(got->ID) {
 				case '0':
@@ -1574,6 +1600,7 @@ void reset_function(int i, double f, char *s)
 		// TODO: hold the power line low
 		// TODO: wait for discharge
 		// TODO: raise the power line
+		fprintf(stderr," === !!! POWER-CYCLE your target quickly now !!! === \n");
 		
 		// wait extra time or shake the power
 		gap_delay_function(POR_RESET_ARG, f, s);

@@ -14,5 +14,7 @@ typedef struct {
 
 } global_vars_t;
 
+#define		GLOBAL_VARS_SIZE	sizeof(global_vars_t)
+
 
 #endif /* GLOBALVARSIZE_H_ */

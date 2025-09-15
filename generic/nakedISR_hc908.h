@@ -64,6 +64,7 @@ void KEYB_isr(void) __interrupt(_isrNo_KEYB) __naked
 	__endasm;
 }
 
+#if defined(_MC68HC908MR32_H) || defined(_MC68HC908JKJL_H)
 #if !defined(HAVE_ADC_ISR)
 void ADC_isr(void) __interrupt(_isrNo_ADC)  __naked
 {
@@ -73,6 +74,7 @@ void ADC_isr(void) __interrupt(_isrNo_ADC)  __naked
 	__endasm;
 }
 #endif
+#endif // header for CPU with ADC included
 
 
 

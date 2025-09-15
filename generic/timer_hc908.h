@@ -35,7 +35,12 @@
 		#ifdef 	_MC68HC908JKJL_H
 			#define		TIMER_N			1
 		#else
-			#error "no timer specified"
+			#ifdef _MC68HC908JB8_H
+				// define to nothing
+				#define	TIMER_N
+			#else
+				#error "no timer specified"
+			#endif
 		#endif
 	#endif
 #endif
@@ -404,7 +409,7 @@ void mDelay(uint16_t a)
 #else
 	// TODO: handle timer wrap
 	getTime();
-	timer_int_t t = timer_data.now + a;
+	timer_int_t_ t = timer_data.now + a;
 	do {
 		getTime();
 	} while (timer_data.now < t);

@@ -12,11 +12,13 @@ need	256			#  bytes to read/write at least
 wait	20			#  ms until break received or exit
 value	128			#  read from memory location
 MHz	3			#  of system clock in target
-cpu	2			#  variant in target	
+cpu	hc908jb8
+		#  variant-name in target	
 reset	0			#  device and write bootloader
 jump	56320			#  execute code in target	
 por	5000			#  power-on-reset with wait
 backup	3			#  file creation mask {1,2,4}
+CPU	2			#  variant-index in target	
 zap	0			#  mass erase flash memory	
 flash	target.s19
 		#  s19 file to target eeprom

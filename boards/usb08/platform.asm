@@ -7,16 +7,22 @@
 
 			.PROCESSOR		68908
 
+;    #ifndef MC68HC908_MACROS_DEFINED
 		#include	"macros.asm"
+;    #endif
 
 		#include	"reg68hc908jb8.asm"
 
-		.macro idents_
+	.macro idents_
                 .byte     "JB8",0    	; soft SCI
         .endm
 
-; J2_P8  / PB1  ist  TxD
-; J2_P10 / PB0  ist  RxD
+;
+; so called "user"-serial port 
+;	26-pin header X1
+;		X1_23 / PTC0  is  TxD
+;		X1_18 / PTA7  is  RxD
+;
 
 TXDPORT         .EQU     PTA           ; <<<
 TXDPIN          .EQU     0             ; <<<

@@ -35,8 +35,8 @@ typedef struct {
 typedef struct {
 	mc86hc908_variants_e idx;
 
-	uint16_t cpuSpeed;
 	uint16_t CtrlByte;
+	uint16_t cpuSpeed;
 	uint16_t Laddr;
 	uint16_t dataBuf;
 	uint16_t dataSize;
@@ -55,7 +55,7 @@ typedef struct {
 	uint16_t ramStart;
 	uint16_t ramSize;
 	security_byte_addrs_t secBytes;
-	char variantStr[64];
+	char variantStr[32];
 } cpu_firmware_addr_t;
 
 

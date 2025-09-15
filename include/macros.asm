@@ -1,4 +1,8 @@
 
+    #ifndef  MC68HC908_MACROS_DEFINED
+
+MC68HC908_MACROS_DEFINED	.EQU	1
+
 ;
 ;	MACRO declaration keywords _must_ be lowercase
 ;   MACRO names _must_ be all lowercase
@@ -21,7 +25,7 @@
 next_var	.set		({1}+{2})
 	.endm
 
-;next_var<------>.SET<-->RAMBASE
+;next_var	.SET	RAMBASE
 
 
 	.macro	store_reg
@@ -84,7 +88,7 @@ _L1_{2}:
 	.endm
 
 
-
+    #endif
 
 
 

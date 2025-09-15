@@ -51,7 +51,7 @@ HVEN		.EQU		$08
 ReadSerial	     	.EQU	$FC00
 FlashRead       	.EQU    $FC03
 FlashErase      	.EQU	$FC06
-FlashProg	    	.EQU	$FC77	; $FC09
+FlashPro        	.EQU	$FC77	;	$FC09	; TODO: datasheet says fc09, where is fc77 coming from ? rev-engine ?
 DelayUs         	.EQU	$FC0C	;
 
 WriteSerial	     	.EQU	$FED6
@@ -64,7 +64,6 @@ fwLastAddr      .EQU      RAM_START + $0A
 fwDataBlock     .EQU      RAM_START + $0C
 
 
-	#include	"macros.asm"
 
 	.macro	fw_delay
 		ldX		#{1}					;[2]
@@ -74,8 +73,12 @@ fwDataBlock     .EQU      RAM_START + $0C
 
 	.macro	declare_delay
 Delay{1}:
+		pshX
+		pshA
 		fw_delay {2},{3}
-		rts								;[4]
+		pulA
+		pulX
+		rts						;	[!!4]
 	.endm
 
 	; macro-names MUST be all lowercase
@@ -83,7 +86,7 @@ Delay{1}:
 		store_reg	fwCtrlByte,#$40
 		store_reg	fwCpuSpeed,#(4*F_CPU)
 		ldHX		#FLASH_START
-		jsr			FlashErase
+		jsr		FlashErase
 	.endm
 
 	.macro	delay5us

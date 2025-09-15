@@ -1,4 +1,6 @@
 
+include TTY.mk
+
 ifeq (_$(TTY)_,__)
     TTY = /dev/ttyUSB0
 endif
@@ -30,3 +32,10 @@ kuser.sh:
 
 $(HC08SPRG_EXE):
 	( env -i bash -l -c "$(MAKE) -C $(HC08SPRG)" )
+
+
+TTY.mk:
+	@(echo "TTY = /dev/ttyUSB0" ;\
+	  echo "WIRE = D") >TTY.mk; \
+	  echo "!! You must adapt file TTY.mk !!";\
+	  read A

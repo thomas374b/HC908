@@ -38,3 +38,4 @@ KEY2	.EQU	PTA6
 USB_DP	.EQU	PTE3
 USB_DM	.EQU	PTE4
 
+		#include	"platform.asm"

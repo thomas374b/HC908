@@ -1,3 +1,5 @@
+CPU_VARIANT = hc908jk1
+
 RAM_START = 0x80
 RAM_SIZE = 128
 
