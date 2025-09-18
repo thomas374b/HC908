@@ -307,7 +307,7 @@ else
 endif
 
 
-DEFS += -D$(UNAME) -D__$(MACHINE)__ 
+DEFS += -D$(UNAME) -D__$(shell echo $(MACHINE) | sed s/x86-64/x64/g)__
 DEFS += -DCOMPILER_HOST=\"$(shell hostname)\"
 DEFS += -DCOMPILER_EXE=\"$(CC)\"
 DEFS += -DCOMPILER_VERSION=\"$(CC_VERSION)\"
@@ -655,7 +655,7 @@ else
 distclean:
 endif	
 	if test -L $(TARGET); then rm $(TARGET); fi
-	rm -rf ./built moc_*.cpp uic_*.cpp .*_o core a.out *.bck *.bak .*.bak .*.bck Makefile-* .hc~*~
+	rm -rf ./built moc_*.cpp uic_*.cpp .*_o core a.out *.bck *.bak .*.bak .*.bck Makefile-* .hc~*~ .cache-*
 	chmod 440 .headers .sources .defines
 
 $(O_KMOD): cflag_info $(OBJS)
