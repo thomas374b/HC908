@@ -1174,7 +1174,11 @@ void waitBreak_function(int i, double f, char *s)
 		}
 		if (bSendKeybytes) {
 			uint64_t *lKey = (uint64_t *)&_SKEY_BYTES;
+#ifdef __i686__			
 			fprintf(stderr, " -> arg key3 0x%016llX  @ 0x%08lx\n", *lKey, (long)lKey);
+#else			
+			fprintf(stderr, " -> arg key3 0x%016lX  @ 0x%016lx\n", *lKey, (long)lKey);
+#endif			
 
 //			lKey = (uint64_t *)&security_key;
 //			fprintf(stderr, " -> arg key4 0x%016llX  @ 0x%08lx\n",*lKey, (long)lKey);
