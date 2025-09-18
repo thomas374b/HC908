@@ -52,7 +52,7 @@ SPEED           .EQU     6             ; specify Xtal clk in MHz if no calibrati
 CONFIG1			.EQU		CONFIG
 
 	#ifndef APPL_RAM_START
-		#if (USE_BOOTLOADER > 0)
+		#if (USE_BOOTLOADER > 0) || (USE_MONITOR_MODE > 0)
 APPL_RAM_START        	.EQU    	$48		
 		#else	
 APPL_RAM_START        	.EQU    	$40

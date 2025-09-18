@@ -31,7 +31,7 @@ next_var	.set	APPL_RAM_START
 		declare_var		portStr,40		
 
 	#if TARGET_IS_RAM
-		.ORG	RAM_START
+		.ORG	APPL_RAM_START
 		.word	0					; TIMER_WRAPS
 	#else
 		.ORG	FLASH_START
